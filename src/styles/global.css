@@ -961,6 +961,8 @@ html.js .telemetry {
 }
 
 .card-meta dt {
+  flex: none;
+  white-space: nowrap;
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }

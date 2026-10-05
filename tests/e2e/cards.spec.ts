@@ -47,3 +47,29 @@ test("e2e-details-keyboard", async ({ page }) => {
     await expect(summary).toBeFocused();
   }
 });
+
+test("e2e-card-meta-no-word-break-360", async ({ page }) => {
+  for (const w of [360, 375]) {
+    await page.setViewportSize({ width: w, height: 800 });
+    await page.goto("/");
+    const split = await page.evaluate(() => {
+      const bad: string[] = [];
+      for (const el of document.querySelectorAll<HTMLElement>(".card-meta dt, .card-meta dd")) {
+        const node = el.firstChild;
+        if (!node || node.nodeType !== 3) continue;
+        const text = node.textContent ?? "";
+        let i = 0;
+        for (const word of text.split(/\s+/).filter(Boolean)) {
+          const at = text.indexOf(word, i);
+          const range = document.createRange();
+          range.setStart(node, at);
+          range.setEnd(node, at + word.length);
+          if (range.getClientRects().length > 1) bad.push(word);
+          i = at + word.length;
+        }
+      }
+      return bad;
+    });
+    expect(split, `words broken at ${w}`).toEqual([]);
+  }
+});

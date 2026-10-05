@@ -201,3 +201,33 @@ test("e2e-focus-visible", async ({ page }) => {
     expect(o.s, `stop ${i}`).not.toBe("none");
   }
 });
+
+// A query with 7 or more results must not make the list a scroll region.
+test("e2e-search-many-results-axe", async ({ page }) => {
+  for (const scheme of ["dark", "light"] as const) {
+    await page.emulateMedia({ colorScheme: scheme });
+    for (const [width, height] of [
+      [768, 1024],
+      [1280, 800],
+      [1920, 1080],
+    ]) {
+      await page.setViewportSize({ width, height });
+      await page.goto("/");
+      await page.waitForSelector("html.search-ready");
+      await page.keyboard.press("/");
+      await page.getByRole("combobox").pressSequentially("er");
+      await expect(page.locator(".search-count")).toHaveText(/^1 of \d+$/);
+      await page.waitForTimeout(80);
+      expect(await page.getByRole("option").count(), `${scheme} ${width} options`).toBeGreaterThanOrEqual(7);
+      expect(await axe(page), `${scheme} ${width} list open`).toEqual([]);
+      // Keyboard: the last option and the "and N more" note both stay inside the list box.
+      const last = (await page.getByRole("option").count()) - 1;
+      for (let i = 0; i <= last; i++) await page.keyboard.press("ArrowDown");
+      const fits = await page.evaluate(() => {
+        const pop = document.querySelector(".search-pop") as HTMLElement;
+        return pop.scrollHeight <= pop.clientHeight;
+      });
+      expect(fits, `${scheme} ${width} no inner scroll`).toBe(true);
+    }
+  }
+});

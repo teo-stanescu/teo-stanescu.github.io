@@ -59,7 +59,7 @@ interface Ui {
 
 let ui: Ui | null = null;
 let docs: Doc[] = [];
-let labels = { noMatches: "", of: "", more: "and {n} more" };
+let labels = { noMatches: "", of: "", more: "" };
 let prevFocus: HTMLElement | null = null;
 let dirty = false;
 let schedule: (() => void) | null = null;
@@ -487,7 +487,7 @@ function build(bar: HTMLElement): Ui {
 
   field.append(input, count, prev, next, pop);
   root.append(toggle, field);
-  labels = { noMatches: d.noMatches ?? "", of: d.of ?? "", more: d.more ?? "and {n} more" };
+  labels = { noMatches: d.noMatches ?? "", of: d.of ?? "", more: d.more ?? "" };
   return { root, toggle, field, input, count, prev, next, pop, list, note, more };
 }
 

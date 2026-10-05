@@ -15,7 +15,7 @@ const BLOCK =
 export function buildIndex(root: ParentNode = document): Block[] {
   const blocks: Block[] = [];
   const byEl = new Map<Element, Block>();
-  for (const scope of Array.from(root.querySelectorAll("main, footer"))) {
+  for (const scope of Array.from(root.querySelectorAll(".hero, main, footer"))) {
     const walker = document.createTreeWalker(scope, NodeFilter.SHOW_TEXT);
     for (let n = walker.nextNode(); n; n = walker.nextNode()) {
       const node = n as Text;

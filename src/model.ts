@@ -104,6 +104,7 @@ export interface Labels {
   readonly next: string;
   readonly previous: string;
   readonly results: string;
+  readonly more: string;
 }
 
 export interface Content {

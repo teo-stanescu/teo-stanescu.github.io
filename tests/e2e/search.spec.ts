@@ -23,7 +23,7 @@ async function expectedCount(page: Page, q: string): Promise<number> {
   return page.evaluate((query) => {
     const skip = ".telemetry, nav, .topbar, [aria-hidden='true'], .visually-hidden, .skip-link";
     let n = 0;
-    for (const scope of document.querySelectorAll("main, footer")) {
+    for (const scope of document.querySelectorAll(".hero, main, footer")) {
       const w = document.createTreeWalker(scope, NodeFilter.SHOW_TEXT);
       for (let t = w.nextNode(); t; t = w.nextNode()) {
         if ((t.parentElement as Element).closest(skip)) continue;
@@ -360,9 +360,7 @@ test("e2e-search-scope", async ({ page }) => {
   await expect(page.locator(".search-pop")).toBeHidden();
 });
 
-// Open defect for the lead: buildIndex (search-index.ts) scans "main, footer" only.
-// The hero sits outside both, so AC "scope: the hero" fails. This task may not edit that file.
-test.fixme("e2e-search-scope-hero", async ({ page }) => {
+test("e2e-search-scope-hero", async ({ page }) => {
   await ready(page);
   await type(page, "Combines hands-on");
   await expect(counter(page)).toHaveText("1 of 1");
@@ -614,4 +612,11 @@ test("e2e-search-long-name-ellipsis", async ({ page }) => {
       expect(t.inside).toBe(true);
     }
   }
+});
+
+test("e2e-search-more-row", async ({ page }) => {
+  await ready(page);
+  await type(page, "er");
+  await expect(options(page)).toHaveCount(8);
+  await expect(page.locator(".search-pop")).toContainText(/^[\s\S]*and \d+ more/);
 });

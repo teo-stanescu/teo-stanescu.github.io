@@ -28,6 +28,7 @@ export function App(props: PageProps) {
         data-next={labels.next}
         data-previous={labels.previous}
         data-results={labels.results}
+        data-more={labels.more}
       />
       <Nav content={props.content} />
       <Hero content={props.content} hasCv={props.hasCv} base={props.base} />

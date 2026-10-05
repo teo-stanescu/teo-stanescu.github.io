@@ -235,5 +235,6 @@ export const content: Content = {
     next: "Next",
     previous: "Previous",
     results: "Search results",
+    more: "and {n} more",
   },
 };

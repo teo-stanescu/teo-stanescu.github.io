@@ -67,6 +67,7 @@ describe("dist", () => {
       next: _s7,
       previous: _s8,
       results: _s9,
+      more: _s10,
       ...labels
     } = rest.labels;
     const strings: string[] = [];

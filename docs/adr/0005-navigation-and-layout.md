@@ -15,7 +15,7 @@ Constraints:
 
 ## Decision
 1. **One list.** The build prerenders one `<nav>` list with seven entries: Top, Stage 3, Stage 2, Stage 1, Stage 0, Skills and Contact. Each stage entry holds a nested list of its roles. Each role entry targets the heading of its card.
-2. **Rail from 1280 px.** The container grows by 13 rem. The nav is a sticky rail in that space.
+2. **Rail from 1280 px.** The container grows by 13 rem, at most 208 px (the rail is 208 px wide at 1920 px, where the root size is 18 px). The nav is a sticky rail in that space.
 3. **Popover below 1280 px.** Under the `js` class, the same element opens as a native popover from a "Contents" button in the top bar. Escape closes it and returns focus to the button. Choosing a link closes it. The script removes the button and the popover role again when the viewport grows to 1280 px.
 4. **Fallback.** Under `js` the in-flow list is hidden below 1280 px, so a late script causes no layout shift. A small inline script in the `<head>` removes the `js` class at load if the client module has not set `nav-ready`. The plain list then shows again, and the page is complete.
 5. **Source order.** The nav comes before the hero in the DOM, so tab order follows the screen. The skip link jumps past it.

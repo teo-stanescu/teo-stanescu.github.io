@@ -155,6 +155,19 @@ test("e2e-rail-sticky-scrolls", async ({ page }) => {
   }
 });
 
+test("e2e-nav-visible-without-nav-ready-1024", async ({ page }) => {
+  await openAt(page, 1024, 800);
+  const m = await page.evaluate(() => ({
+    js: document.documentElement.classList.contains("js"),
+    ready: document.documentElement.classList.contains("nav-ready"),
+    display: getComputedStyle(document.querySelector("#nav")!).display,
+  }));
+  expect(m.js).toBe(true);
+  expect(m.ready).toBe(false);
+  expect(m.display).not.toBe("none");
+  await expect(page.locator("#nav a").first()).toBeVisible();
+});
+
 test("e2e-bar-height", async ({ page }) => {
   await openAt(page, 360, 640);
   const m = await page.evaluate(() => {

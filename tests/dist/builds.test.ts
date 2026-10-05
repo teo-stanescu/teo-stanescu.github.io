@@ -75,7 +75,7 @@ describe("builds", () => {
     const html = readFileSync(join(copy, "dist/index.html"), "utf8");
     expect(html).toContain("Roundtrip Test Title");
     expect(/<p class="hero-title">([^<]*)<\/p>/.exec(html)![1]).toBe("Roundtrip Test Title");
-    const hero = /<header class="hero">[\s\S]*?<\/header>/.exec(html)![0];
+    const hero = /<header class="hero"[^>]*>[\s\S]*?<\/header>/.exec(html)![0];
     expect(hero).not.toContain("Principal Engineer");
   }, 180_000);
 });

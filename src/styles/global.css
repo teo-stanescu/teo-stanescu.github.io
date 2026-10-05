@@ -226,10 +226,17 @@ a:hover {
   padding-left: var(--s-2);
 }
 
-/* With JavaScript the list becomes a popover below 1280 px (next task). Until then hide it, so the page does not shift. */
+/* The popover state hides the list below 1280 px. Only a class that the script sets after a good start does this, never html.js alone. */
 @media (max-width: 1279.98px) {
-  html.js .nav {
+  html.nav-ready .nav {
     display: none;
+  }
+}
+
+/* Below 1280 px the plain list keeps clear of the telemetry panel. */
+@media (min-width: 768px) {
+  html.js .nav {
+    margin-right: calc(var(--panel-w) + 2rem);
   }
 }
 

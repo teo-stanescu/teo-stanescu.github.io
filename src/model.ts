@@ -15,6 +15,21 @@ export const todo = (note: string): Todo => {
 export const present = (t: Text | undefined): t is string =>
   typeof t === "string" && t.length > 0;
 
+// A detail bullet can mix plain text with a phrase in another language (WCAG 3.1.2).
+export type Run = string | Tagged;
+export type Tagged = { readonly text: string; readonly lang: string };
+// The language code is not enumerable, so tools that walk content for text see only the phrase.
+export const tagged = (lang: string, text: string): Tagged => {
+  const t = { text };
+  Object.defineProperty(t, "lang", { value: lang, enumerable: false });
+  return Object.freeze(t) as Tagged;
+};
+export const isTagged = (r: Run): r is Tagged => typeof r !== "string";
+export type Rich = { readonly runs: readonly Run[] };
+export type Detail = Text | Rich;
+export const isRich = (d: Detail): d is Rich => typeof d === "object" && "runs" in d;
+export const presentDetail = (d: Detail): d is string | Rich => isRich(d) || present(d);
+
 export type YearMonth = { readonly year: number; readonly month: number }; // month 1..12
 export type DateRange = { readonly start: YearMonth; readonly end: YearMonth | "present" | Todo };
 export type StageId = 0 | 1 | 2 | 3;
@@ -41,7 +56,7 @@ export interface Role {
   readonly context: Text;
   readonly decision: Text;
   readonly outcome: Text;
-  readonly details: readonly Text[]; // long bullets behind "Details"
+  readonly details: readonly Detail[]; // long bullets behind "Details"
   readonly clientRefs?: readonly ClientDescriptor[]; // allowed descriptors used in this role's text (AC-25)
 }
 

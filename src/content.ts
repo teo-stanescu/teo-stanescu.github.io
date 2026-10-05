@@ -1,4 +1,4 @@
-import { todo, type Content } from "./model";
+import { tagged, todo, type Content } from "./model";
 
 export const content: Content = {
   person: {
@@ -32,7 +32,13 @@ export const content: Content = {
             "Erasmus+ semester, Aerospace Engineering, Hochschule Bremen. Contacted several German universities myself to find one interested in a partnership.",
           outcome: todo("the brief states no outcome of the degree or the Erasmus+ semester"),
           details: [
-            "Erasmus+ semester, Aerospace Engineering (\"Luft- und Raumfahrt Ingenieurwissenschaften\"), Hochschule Bremen, September 2016 - February 2017.",
+            {
+              runs: [
+                "Erasmus+ semester, Aerospace Engineering (\"",
+                tagged("de", "Luft- und Raumfahrt Ingenieurwissenschaften"),
+                "\"), Hochschule Bremen, September 2016 - February 2017.",
+              ],
+            },
           ],
         },
       ],

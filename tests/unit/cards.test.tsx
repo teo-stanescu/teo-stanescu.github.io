@@ -3,7 +3,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { App } from "../../src/components/App";
 import { RoleCard } from "../../src/components/RoleCard";
 import { content } from "../../src/content";
-import { todo, type Role } from "../../src/model";
+import { tagged, todo, type Role } from "../../src/model";
 
 const pageHtml = () => renderToStaticMarkup(<App content={content} hasCv={false} base="/" />);
 const cardHtml = (role: Role, stageName = "1 - Test") =>
@@ -73,6 +73,18 @@ it("render-omits-todo-parts", () => {
   expect(tags(some, "li").map((l) => l.text)).toEqual(["kept"]);
   const noOrg = cardHtml({ ...base, org: todo("o") });
   expect(noOrg).not.toContain("card-org");
+});
+
+it("render-lang-de-phrase", () => {
+  const html = cardHtml({
+    ...base,
+    details: [{ runs: ['Program ("', tagged("de", "Luft- und Raumfahrt"), '"), Bremen.'] }],
+  });
+  expect(html).toContain('<li>Program (&quot;<span lang="de">Luft- und Raumfahrt</span>&quot;), Bremen.</li>');
+  // The real page marks the German program name and nothing else.
+  const page = pageHtml();
+  expect(page).toContain('<span lang="de">Luft- und Raumfahrt Ingenieurwissenschaften</span>');
+  expect(page.match(/lang="de"/g)).toHaveLength(1);
 });
 
 it("render-heading-levels", () => {

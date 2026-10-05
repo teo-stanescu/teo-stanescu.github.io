@@ -1,5 +1,6 @@
+import { Fragment } from "react";
 import type { Labels, Role } from "../model";
-import { formatRange, present, teamSizeLabel } from "../model";
+import { formatRange, isRich, isTagged, present, presentDetail, teamSizeLabel } from "../model";
 
 export function RoleCard(props: { role: Role; stageName: string; labels: Labels }) {
   const { role, labels } = props;
@@ -7,7 +8,7 @@ export function RoleCard(props: { role: Role; stageName: string; labels: Labels 
   if (present(role.context)) parts.push([labels.context, role.context]);
   if (present(role.decision)) parts.push([labels.decision, role.decision]);
   if (present(role.outcome)) parts.push([labels.outcome, role.outcome]);
-  const bullets = role.details.filter(present);
+  const bullets = role.details.filter(presentDetail);
   const team = teamSizeLabel(role.teamSize, role.teamSizeUpTo ? labels.upTo : undefined);
   const meta: [string, string][] = [];
   if (team) meta.push([labels.tTeam, team]);
@@ -53,8 +54,18 @@ export function RoleCard(props: { role: Role; stageName: string; labels: Labels 
             </span>
           </summary>
           <ul>
-            {bullets.map((b) => (
-              <li key={b}>{b}</li>
+            {bullets.map((b, i) => (
+              <li key={i}>
+                {isRich(b)
+                  ? b.runs.map((r, j) =>
+                      isTagged(r) ? (
+                        <span key={j} lang={r.lang}>{r.text}</span>
+                      ) : (
+                        <Fragment key={j}>{r}</Fragment>
+                      ),
+                    )
+                  : b}
+              </li>
             ))}
           </ul>
         </details>

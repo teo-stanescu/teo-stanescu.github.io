@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { spawnSync } from "node:child_process";
-import { accessSync, constants, readFileSync, mkdtempSync, writeFileSync } from "node:fs";
+import { accessSync, constants, cpSync, existsSync, readFileSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -21,13 +21,39 @@ describe("git hooks", () => {
 
   it("commit-msg-hook-rejects", () => {
     accessSync(".githooks/commit-msg", constants.X_OK);
+    const dir = mkdtempSync(join(tmpdir(), "msg-"));
+    const lp = join(dir, "list.txt");
+    writeFileSync(lp, "zorblax holdings\n");
+    const env = { ...process.env, CHECK_PRIVATE_LIST: lp };
     const run = (msg: string) => {
-      const f = join(mkdtempSync(join(tmpdir(), "msg-")), "MSG");
+      const f = join(dir, "MSG");
       writeFileSync(f, msg + "\n");
-      return spawnSync(".githooks/commit-msg", [f]).status;
+      return spawnSync(".githooks/commit-msg", [f], { env }).status;
     };
     expect(run("Add stuff")).toBe(1);
     expect(run("feat(x): add stuff")).toBe(0);
+  });
+
+  it("hooks-tests-hermetic-no-private-list", () => {
+    // Every test that runs the commit-msg hook must pass its own list. CI has no .private folder.
+    const src = readFileSync("tests/unit/hooks.test.ts", "utf8");
+    const needle = ["spawnSync(", '".githooks/commit-msg"'].join("");
+    const calls = src.split("\n").filter((l) => l.includes(needle));
+    expect(calls.length).toBeGreaterThan(0);
+    for (const l of calls) expect(l, l).toContain("env");
+
+    // Run the hook in a copy of the repo scripts with no .private folder.
+    const root = mkdtempSync(join(tmpdir(), "clean-"));
+    cpSync("scripts", join(root, "scripts"), { recursive: true });
+    cpSync(".githooks", join(root, ".githooks"), { recursive: true });
+    const list = join(root, "list.txt");
+    writeFileSync(list, "zorblax holdings\n");
+    const f = join(root, "MSG");
+    writeFileSync(f, "feat(x): add stuff\n");
+    const env = { ...process.env, CHECK_PRIVATE_LIST: list };
+    const r = spawnSync(".githooks/commit-msg", [f], { cwd: root, env });
+    expect(existsSync(join(root, ".private"))).toBe(false);
+    expect(r.status).toBe(0);
   });
 
   it("commit-msg-hook-runs-private-check", () => {

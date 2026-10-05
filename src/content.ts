@@ -7,7 +7,8 @@ export const content: Content = {
     location: "Bucharest, Romania",
     email: "teo.st95@gmail.com",
     summary: "Principal engineer with 8+ years in software engineering, more than five of them on the FintechOS platform for banking and insurance customers. Progressed from developer to tech lead, solution architect and principal engineer: leading teams of up to 12, owning platform upgrades and architecture for some of the largest customers, and contributing to company initiatives such as AI adoption and product feature improvement. Combines hands-on engineering depth with architectural judgement, customer partnership and people leadership.",
-    positioning: todo("hero positioning line: the user supplies the text"),
+    positioning:
+      "Principal engineer with 5+ years on banking and insurance platforms, now looking for AI-focused engineering and architecture roles.",
   },
   seo: {
     title: "Teodor Stanescu - Principal Engineer",

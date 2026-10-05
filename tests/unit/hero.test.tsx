@@ -2,7 +2,7 @@ import { it, expect } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import { App } from "../../src/components/App";
 import { content } from "../../src/content";
-import { todo, type Todo } from "../../src/model";
+import { present, todo, type Todo } from "../../src/model";
 import { GITHUB_URL } from "../../src/config";
 
 const html = (o: { hasCv: boolean; base?: string; positioning?: string | Todo }) => {
@@ -64,4 +64,10 @@ it("render-hero-summary", () => {
   expect(out.indexOf("hero-line")).toBeLessThan(out.indexOf("hero-summary"));
   const noLine = html({ hasCv: false, positioning: todo("x") });
   expect(noLine).toMatch(new RegExp(`${content.person.location}</p><p class="hero-summary">`));
+});
+
+it("render-hero-positioning-line", () => {
+  const out = html({ hasCv: false });
+  expect(present(content.person.positioning)).toBe(true);
+  expect(out).toContain(`<p class="hero-line">${content.person.positioning}</p>`);
 });

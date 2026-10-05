@@ -105,6 +105,13 @@ describe("dist", () => {
     expect(JSON.parse(m![1]!)["@type"]).toBe("Person");
   });
 
+  it("dist-meta-description-length", () => {
+    const m = /<meta name="description" content="([^"]*)"/.exec(html);
+    expect(m).not.toBeNull();
+    expect(m![1]!.length).toBeGreaterThan(0);
+    expect(m![1]!.length).toBeLessThanOrEqual(160);
+  });
+
   it("dist-heading-levels", () => {
     const hs = [...html.matchAll(/<h([1-6])[^>]*>([\s\S]*?)<\/h\1>/g)];
     expect(hs.length).toBeGreaterThan(0);

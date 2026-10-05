@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { scanText } from "../../scripts/check-private.mjs";
 import { content } from "../../src/content";
-import { CLIENT_DESCRIPTORS, present, teamSizeLabel, type Role, type Todo } from "../../src/model";
+import { CLIENT_DESCRIPTORS, teamSizeLabel, type Role, type Todo } from "../../src/model";
 
 const roles = (): Role[] => content.stages.flatMap((s) => [...s.roles]);
 const role = (id: string): Role => {
@@ -130,8 +130,10 @@ describe("content", () => {
     expect(badDescriptors("a client implementation for a German bank")).toHaveLength(1);
   });
 
-  it("content-positioning-is-todo", () => {
-    expect(present(content.person.positioning)).toBe(false);
+  it("content-positioning-line-exact", () => {
+    expect(content.person.positioning).toBe(
+      "Principal engineer with 5+ years on banking and insurance platforms, now looking for AI-focused engineering and architecture roles.",
+    );
   });
 
   it("content-details-no-duplicate-parts", () => {

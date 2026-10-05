@@ -70,3 +70,13 @@ it("render-jsonld-escapes-script-end", () => {
   const m = /<script type="application\/ld\+json">([\s\S]*?)<\/script>/.exec(head);
   expect(JSON.parse(m![1]!).description).toBe(evil);
 });
+
+it("render-head-description-is-positioning", () => {
+  const { head } = render(opts);
+  const line = content.person.positioning as string;
+  expect(head).toContain(`<meta name="description" content="${line}"`);
+  expect(head).toContain(`<meta property="og:description" content="${line}"`);
+  expect(head).toContain(`<meta name="twitter:description" content="${line}"`);
+  const m = /<script type="application\/ld\+json">([\s\S]*?)<\/script>/.exec(head);
+  expect(JSON.parse(m![1]!).description).toBe(content.person.summary);
+});

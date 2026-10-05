@@ -1,8 +1,9 @@
-import type { Content } from "../model";
+import { present, type Content } from "../model";
 import { SITE_URL, GITHUB_URL, FONT_PRELOAD_HREF } from "../config";
 
 export function Head({ content }: { content: Content }) {
   const { seo, person } = content;
+  const description = present(person.positioning) ? person.positioning : seo.description;
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Person",
@@ -15,10 +16,11 @@ export function Head({ content }: { content: Content }) {
   return (
     <>
       <title>{seo.title}</title>
-      <meta name="description" content={seo.description} />
+      <meta name="description" content={description} />
       <link rel="canonical" href={SITE_URL} />
       <meta property="og:title" content={seo.title} />
-      <meta property="og:description" content={seo.description} />
+      <meta property="og:description" content={description} />
+      <meta name="twitter:description" content={description} />
       <meta property="og:url" content={SITE_URL} />
       <meta property="og:type" content="website" />
       <meta property="og:image" content={`${SITE_URL}og-card.png`} />

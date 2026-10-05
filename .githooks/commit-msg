@@ -1,3 +1,5 @@
 #!/bin/sh
 # .githooks/commit-msg
-exec node scripts/check-commits.mjs --file "$1"
+set -e
+node scripts/check-commits.mjs --file "$1"
+node scripts/check-private.mjs --message "$1"

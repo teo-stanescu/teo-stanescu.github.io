@@ -4,7 +4,17 @@ import { fileURLToPath } from "node:url";
 import { join } from "node:path";
 
 const DEFAULT_LIST = ".private/denylist.txt";
-const PHONE = /(?<![\w.])\+?\d(?:[ .-]?\d){8,14}(?![\w.])/;
+// Phone shapes: a leading "+", or a leading "0" with separators, or 3-digit groups joined by "." or "-".
+const SEP = "[ .()-]{1,3}";
+const PHONE = new RegExp(
+  [
+    `\\+\\d{1,3}(?:${SEP.replace("{1,3}", "{0,3}")}\\d){7,12}`,
+    `0\\d{2,3}(?:${SEP}\\d{2,4}){2,3}`,
+    `\\d{3}([.-])\\d{3}\\1\\d{3,4}`,
+  ]
+    .map((a) => `(?<![\\w.+])(?:${a})(?!\\w|\\.\\d)`)
+    .join("|"),
+);
 
 export function normalise(s) {
   const t = s
@@ -20,7 +30,7 @@ export function normalise(s) {
 export function loadList(path = process.env.CHECK_PRIVATE_LIST || DEFAULT_LIST) {
   if (!existsSync(path)) {
     throw new Error(
-      `Private list not found: ${DEFAULT_LIST}. The owner must create it (one entry per line).`,
+      `Private list not found: ${path} (default ${DEFAULT_LIST}). The owner must create it, one entry per line.`,
     );
   }
   const entries = [];
@@ -37,13 +47,23 @@ export function loadList(path = process.env.CHECK_PRIVATE_LIST || DEFAULT_LIST) 
   return entries;
 }
 
+const JOIN_MIN = 5;
+
 export function scanText(text, entries) {
   const hits = [];
   text.split(/\r?\n/).forEach((raw, i) => {
     const line = i + 1;
     const norm = normalise(raw);
+    const joined = norm.replace(/ /g, "");
     for (const e of entries) {
-      if (norm.includes(e.text)) hits.push({ line, kind: "entry", n: e.n });
+      const core = e.text.trim();
+      const multi = core.includes(" ");
+      if (
+        norm.includes(e.text) ||
+        (multi && core.length >= JOIN_MIN && joined.includes(core.replace(/ /g, "")))
+      ) {
+        hits.push({ line, kind: "entry", n: e.n });
+      }
     }
     if (PHONE.test(raw)) hits.push({ line, kind: "phone" });
   });
@@ -71,8 +91,11 @@ function walk(dir, base, out) {
 }
 
 export function filesToScan(root = ".") {
-  const tracked = execFileSync("git", ["ls-files"], { cwd: root, encoding: "utf8" })
-    .split("\n")
+  const tracked = execFileSync("git", ["-c", "core.quotePath=false", "ls-files", "-z"], {
+    cwd: root,
+    encoding: "utf8",
+  })
+    .split("\0")
     .filter(Boolean);
   const dist = [];
   if (existsSync(join(root, "dist"))) walk("dist", root, dist);
@@ -82,7 +105,10 @@ export function filesToScan(root = ".") {
 const isBinary = (buf) => buf.subarray(0, 8000).includes(0);
 
 function report(path, buf, entries) {
-  if (isBinary(buf)) return 0;
+  if (isBinary(buf)) {
+    console.error(`warning: ${path}: binary file, not scanned`);
+    return 0;
+  }
   const hits = scanText(buf.toString("utf8"), entries);
   for (const h of hits) console.error(formatHit(path, h));
   return hits.length;
@@ -97,11 +123,17 @@ function main(argv) {
     return 1;
   }
   let found = 0;
-  if (argv[0] === "--staged") {
-    const names = execFileSync("git", ["diff", "--cached", "--name-only", "--diff-filter=ACMR"], {
-      encoding: "utf8",
-    })
-      .split("\n")
+  if (argv[0] === "--message" && argv[1]) {
+    const hits = scanText(readFileSync(argv[1], "utf8"), entries);
+    for (const h of hits) console.error(formatHit("commit message", h));
+    found += hits.length;
+  } else if (argv[0] === "--staged") {
+    const names = execFileSync(
+      "git",
+      ["-c", "core.quotePath=false", "diff", "--cached", "--name-only", "-z", "--diff-filter=ACMR"],
+      { encoding: "utf8" },
+    )
+      .split("\0")
       .filter(Boolean);
     const bad = checkStagedPaths(names);
     for (const b of bad) console.error(b);
@@ -112,7 +144,10 @@ function main(argv) {
     }
   } else {
     for (const p of filesToScan()) {
-      if (!existsSync(p)) continue;
+      if (!existsSync(p)) {
+        console.error(`warning: ${p}: tracked path missing, not scanned`);
+        continue;
+      }
       found += report(p, readFileSync(p), entries);
     }
   }

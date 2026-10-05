@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
+import { ESLint } from "eslint";
 
 const read = (p: string) => readFileSync(p, "utf8");
 
@@ -17,6 +18,8 @@ describe("repo scaffold", () => {
       ".claude/",
       "node_modules/",
       "dist/",
+      "node_modules",
+      "dist",
     ]) {
       expect(lines).toContain(entry);
     }
@@ -70,6 +73,9 @@ describe("repo ci", () => {
     expect(w).toContain("actions/upload-pages-artifact");
     expect(w).toMatch(/path:\s*dist/);
     expect(w).toContain("actions/deploy-pages");
+    expect(w).toContain("fetch-depth: 0");
+    expect(w).toMatch(/needs:\s*build/);
+    expect(w).toContain("id: deployment");
     expect(w).not.toContain("secrets.");
     expect(w).not.toContain("pull_request_target");
   });
@@ -82,5 +88,30 @@ describe("repo ci", () => {
     expect(s.lint).toContain("eslint");
     expect(s.typecheck).toContain("tsc");
     expect(s.build).toContain("vite build");
+  });
+});
+
+describe("repo eslint", () => {
+  it("eslint-ignores-worktrees-and-dist", async () => {
+    const eslint = new ESLint();
+    for (const p of [".worktrees/x/a.ts", ".worktrees/x/dist/m.js", "dist/a.js", "a/dist/m.js", "playwright-report/a.js"]) {
+      expect(await eslint.isPathIgnored(join(process.cwd(), p)), p).toBe(true);
+    }
+  });
+
+  it("eslint-client-blocks-content-imports", async () => {
+    const eslint = new ESLint();
+    const file = join(process.cwd(), "src/client/a.ts");
+    for (const src of [
+      'import "../content";',
+      'import "../content.js";',
+      'import "../content.ts";',
+      'void import("../content");',
+    ]) {
+      const [r] = await eslint.lintText(src + "\n", { filePath: file });
+      expect(r.errorCount, src).toBeGreaterThan(0);
+    }
+    const [ok] = await eslint.lintText('import "../other";\n', { filePath: file });
+    expect(ok.errorCount).toBe(0);
   });
 });

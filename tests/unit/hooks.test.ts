@@ -29,4 +29,27 @@ describe("git hooks", () => {
     expect(run("Add stuff")).toBe(1);
     expect(run("feat(x): add stuff")).toBe(0);
   });
+
+  it("commit-msg-hook-runs-private-check", () => {
+    const dir = mkdtempSync(join(tmpdir(), "msg-"));
+    const lp = join(dir, "list.txt");
+    writeFileSync(lp, "zorblax holdings\n");
+    const f = join(dir, "MSG");
+    writeFileSync(f, "feat(x): thanks Zorblax Holdings\n");
+    const env = { ...process.env, CHECK_PRIVATE_LIST: lp };
+    expect(spawnSync(".githooks/commit-msg", [f], { env }).status).toBe(1);
+    writeFileSync(f, "feat(x): thanks all\n");
+    expect(spawnSync(".githooks/commit-msg", [f], { env }).status).toBe(0);
+  });
+
+  it("hook-fails-fast-and-covers-merge", () => {
+    expect(readFileSync(".githooks/pre-commit", "utf8")).toMatch(/^set -e/m);
+    accessSync(".githooks/pre-merge-commit", constants.X_OK);
+    expect(readFileSync(".githooks/pre-merge-commit", "utf8")).toContain("pre-commit");
+  });
+
+  it("hooks-prepare-script-installs", () => {
+    const s = JSON.parse(readFileSync("package.json", "utf8")).scripts;
+    expect(s.prepare).toContain("git config core.hooksPath .githooks");
+  });
 });

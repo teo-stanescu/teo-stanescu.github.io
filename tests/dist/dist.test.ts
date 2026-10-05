@@ -36,7 +36,7 @@ function bodyText(): string {
 }
 
 // "id" is a slug, "dates" holds data values (the page shows formatted dates).
-const NOT_TEXT = new Set(["id", "dates"]);
+const NOT_TEXT = new Set(["id", "dates", "lang"]);
 
 function collect(v: unknown, out: string[]): void {
   if (typeof v === "string") out.push(v);

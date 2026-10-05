@@ -18,12 +18,7 @@ export const present = (t: Text | undefined): t is string =>
 // A detail bullet can mix plain text with a phrase in another language (WCAG 3.1.2).
 export type Run = string | Tagged;
 export type Tagged = { readonly text: string; readonly lang: string };
-// The language code is not enumerable, so tools that walk content for text see only the phrase.
-export const tagged = (lang: string, text: string): Tagged => {
-  const t = { text };
-  Object.defineProperty(t, "lang", { value: lang, enumerable: false });
-  return Object.freeze(t) as Tagged;
-};
+export const tagged = (lang: string, text: string): Tagged => Object.freeze({ text, lang });
 export const isTagged = (r: Run): r is Tagged => typeof r !== "string";
 export type Rich = { readonly runs: readonly Run[] };
 export type Detail = Text | Rich;

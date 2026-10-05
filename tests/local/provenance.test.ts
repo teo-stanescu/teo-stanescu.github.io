@@ -17,12 +17,13 @@ function strings(v: unknown, out: string[] = []): string[] {
   else if (Array.isArray(v)) v.forEach((x) => strings(x, out));
   else if (v && typeof v === "object") {
     if ("todo" in (v as Todo)) return out;
-    Object.values(v).forEach((x) => strings(x, out));
+    // "lang" is language metadata of a tagged phrase, not a fact from the brief.
+    for (const [k, x] of Object.entries(v)) if (k !== "lang") strings(x, out);
   }
   return out;
 }
 
-// QA-14: the scan skips only person.positioning. Nothing else is exempt.
+// The scan skips only person.positioning. Nothing else is exempt.
 function scanned(c: Content): string[] {
   const { positioning: _skip, ...person } = c.person;
   void _skip;

@@ -46,25 +46,39 @@ function collect(v: unknown, out: string[]): void {
   }
 }
 
-// Strings that the build places in attributes only (read by script or by assistive tech).
-function attributeValues(): string {
-  return decode([...html.matchAll(/(?:data-[\w-]+|aria-label)="([^"]*)"/g)].map((m) => m[1]).join("\n"));
-}
-
 describe("dist", () => {
   it("dist-all-content-in-html", () => {
     const { seo: _seo, ...rest } = content;
     // The CV label shows only when public/cv.pdf exists (dist-cv-link-matches-file).
-    const { cv: cvLabel, ...labels } = rest.labels;
+    // "telemetry" is an aria-label. "inView" and "notStated" are written by script only.
+    const { cv: cvLabel, telemetry: _t, inView: _i, notStated: _n, ...labels } = rest.labels;
     const strings: string[] = [];
     collect({ ...rest, labels }, strings);
     if (existsSync("public/cv.pdf")) strings.push(cvLabel);
     expect(strings.length).toBeGreaterThan(20);
-    const text = bodyText() + "\n" + attributeValues();
+    // Only visible text counts. Attribute values do not.
+    const text = bodyText();
     const missing = strings
       .filter((s) => s.trim() !== "")
       .filter((s) => !text.includes(s.replace(/\s+/g, " ").trim()));
     expect(missing).toEqual([]);
+  });
+
+  it("dist-card-meta-visible", () => {
+    const cards = [...html.matchAll(/<article class="card"[\s\S]*?<\/article>/g)].map((m) => m[0]);
+    const roles = content.stages.flatMap((st) => st.roles);
+    expect(cards.length).toBe(roles.length);
+    roles.forEach((r, i) => {
+      const text = decode(cards[i]!.replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ");
+      if (r.teamSize) expect(text).toContain(`${content.labels.tTeam} ${r.teamSize}`);
+      if (typeof r.focus === "string") expect(text).toContain(`${content.labels.tFocus} ${r.focus}`);
+    });
+  });
+
+  it("dist-js-class-before-paint", () => {
+    const head = /<head>\s*([\s\S]*?)<\/head>/.exec(html)![1]!;
+    expect(head.startsWith("<script>")).toBe(true);
+    expect(/^<script>([^<]*)<\/script>/.exec(head)![1]).toContain('classList.add("js")');
   });
 
   it("dist-no-todo", () => {

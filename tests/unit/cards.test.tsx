@@ -130,3 +130,12 @@ it("render-stage-label-after-heading", () => {
     `<h2>${s.heading}</h2><p class="stage-label">${s.label}</p>`,
   );
 });
+
+it("render-card-meta", () => {
+  const withBoth = cardHtml({ ...base, teamSize: 6 });
+  expect(withBoth).toContain(
+    `<dl class="card-meta"><div><dt>${content.labels.tTeam}</dt><dd>6</dd></div><div><dt>${content.labels.tFocus}</dt><dd>Focus</dd></div></dl>`,
+  );
+  const none = cardHtml({ ...base, focus: todo("x") });
+  expect(none).not.toContain("card-meta");
+});

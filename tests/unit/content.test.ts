@@ -132,8 +132,31 @@ describe("content", () => {
 
   it("content-positioning-line-exact", () => {
     expect(content.person.positioning).toBe(
-      "Principal engineer with 5+ years on banking and insurance platforms, now looking for AI-focused engineering and architecture roles.",
+      "5+ years on banking and insurance platforms, now looking for AI-focused engineering and architecture roles.",
     );
+  });
+
+  it("content-facts-unchanged", () => {
+    // Literal CV facts from v1.0.0. The test fails when one of them changes.
+    const facts = [
+      { id: "education", title: "Education", start: "2014-9", end: "2018-7", team: undefined },
+      { id: "capgemini", title: "Software Test Engineer", start: "2018-4", end: "2021-2", team: undefined },
+      { id: "hyperpanda", title: "Founder, Full Stack Developer", start: "2017-10", end: "todo", team: undefined },
+      { id: "spark-agency", title: "Full Stack Developer", start: "2020-1", end: "2021-12", team: undefined },
+      { id: "digital-developer", title: "Digital Developer", start: "2021-3", end: "2022-2", team: undefined },
+      { id: "tech-lead", title: "Tech Lead", start: "2022-2", end: "2023-2", team: 5 },
+      { id: "solution-architect", title: "Solution Architect", start: "2023-2", end: "2024-3", team: 6 },
+      { id: "principal-engineer", title: "Principal Engineer", start: "2024-3", end: "present", team: 12 },
+    ];
+    const ym = (d: { year: number; month: number }) => `${d.year}-${d.month}`;
+    const actual = roles().map((r) => ({
+      id: r.id,
+      title: r.title,
+      start: ym(r.dates.start),
+      end: r.dates.end === "present" ? "present" : "todo" in r.dates.end ? "todo" : ym(r.dates.end),
+      team: r.teamSize,
+    }));
+    expect(actual).toEqual(facts);
   });
 
   it("content-details-no-duplicate-parts", () => {

@@ -4,7 +4,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { App } from "../../src/components/App";
 import { RoleCard } from "../../src/components/RoleCard";
 import { content } from "../../src/content";
-import { tagged, todo, type Role } from "../../src/model";
+import { orderedStages, tagged, todo, type Role } from "../../src/model";
 
 const pageHtml = () => renderToStaticMarkup(<App content={content} hasCv={false} base="/" />);
 const cardHtml = (role: Role, stageName = "1 - Test") =>
@@ -31,8 +31,8 @@ const base: Role = {
 it("render-stage-order", () => {
   const out = pageHtml();
   const h2 = tags(out, "h2").map((h) => h.text).filter((t) => t.startsWith("Stage"));
-  expect(h2).toEqual(content.stages.map((s) => s.heading));
-  expect(h2.map((t) => t.slice(0, 7))).toEqual(["Stage 0", "Stage 1", "Stage 2", "Stage 3"]);
+  expect(h2).toEqual(orderedStages(content).map((s) => s.heading));
+  expect(h2.map((t) => t.slice(0, 7))).toEqual(["Stage 3", "Stage 2", "Stage 1", "Stage 0"]);
   for (const s of content.stages) expect(out).toContain(`<section class="stage" id="stage-${s.id}">`);
 });
 
@@ -42,10 +42,24 @@ it("render-stage-membership", () => {
     .slice(1)
     .map((p) => p.split("</section>")[0]!);
   expect(parts).toHaveLength(content.stages.length);
-  content.stages.forEach((s, i) => {
+  orderedStages(content).forEach((s, i) => {
     expect(parts[i]!.startsWith(`${s.id}"`)).toBe(true);
     expect(tags(parts[i]!, "h3").map((h) => h.text)).toEqual(s.roles.map((r) => r.title));
   });
+});
+
+it("render-role-order-newest-first", () => {
+  const h3 = tags(pageHtml(), "h3").map((h) => h.text);
+  expect(h3.slice(0, 8)).toEqual([
+    "Principal Engineer",
+    "Solution Architect",
+    "Tech Lead",
+    "Digital Developer",
+    "Full Stack Developer",
+    "Software Test Engineer",
+    "Founder, Full Stack Developer",
+    "Education",
+  ]);
 });
 
 it("render-card-part-order", () => {

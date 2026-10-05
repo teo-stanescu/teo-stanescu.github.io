@@ -18,11 +18,13 @@ test("e2e-stage-order", async ({ page }) => {
   let prev = -Infinity;
   for (let i = 0; i < n; i++) {
     const el = h2.nth(i);
-    await expect(el).toContainText(`Stage ${i}`);
+    await expect(el).toContainText(`Stage ${3 - i}`);
     const y = (await el.boundingBox())!.y + (await page.evaluate(() => window.scrollY));
     expect(y).toBeGreaterThan(prev);
     prev = y;
   }
+  const skills = page.locator("h2", { hasText: "Skills and languages" });
+  expect((await skills.boundingBox())!.y + (await page.evaluate(() => window.scrollY))).toBeGreaterThan(prev);
 });
 
 test("e2e-details-keyboard", async ({ page }) => {

@@ -3,6 +3,7 @@ import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { join, extname } from "node:path";
 import { gzipSync } from "node:zlib";
 import { content } from "../../src/content";
+import { orderedStages } from "../../src/model";
 import * as cp from "../../scripts/check-private.mjs";
 
 const DIST = "dist";
@@ -66,7 +67,7 @@ describe("dist", () => {
 
   it("dist-card-meta-visible", () => {
     const cards = [...html.matchAll(/<article class="card"[\s\S]*?<\/article>/g)].map((m) => m[0]);
-    const roles = content.stages.flatMap((st) => st.roles);
+    const roles = orderedStages(content).flatMap((st) => st.roles);
     expect(cards.length).toBe(roles.length);
     roles.forEach((r, i) => {
       const text = decode(cards[i]!.replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ");
@@ -103,6 +104,12 @@ describe("dist", () => {
     const m = /<script type="application\/ld\+json">([\s\S]*?)<\/script>/.exec(html);
     expect(m).not.toBeNull();
     expect(JSON.parse(m![1]!)["@type"]).toBe("Person");
+  });
+
+  it("dist-h2-order-newest-first", () => {
+    const h2 = [...html.matchAll(/<h2[^>]*>([\s\S]*?)<\/h2>/g)].map((m) => decode(m[1]!.replace(/<[^>]*>/g, "")));
+    expect(h2.slice(0, 4).map((t) => t.slice(0, 7))).toEqual(["Stage 3", "Stage 2", "Stage 1", "Stage 0"]);
+    expect(h2[4]).toBe("Skills and languages");
   });
 
   it("dist-meta-description-length", () => {

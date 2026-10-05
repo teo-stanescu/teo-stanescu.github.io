@@ -1,4 +1,4 @@
-import type { Content } from "../model";
+import { orderedStages, type Content } from "../model";
 import { Hero } from "./Hero";
 import { Telemetry } from "./Telemetry";
 import { Skills } from "./Skills";
@@ -15,7 +15,7 @@ export function App(props: PageProps) {
       <Telemetry content={props.content} />
       <main id="main" tabIndex={-1}>
         <Trajectory />
-        {props.content.stages.map((s) => (
+        {orderedStages(props.content).map((s) => (
           <Stage key={s.id} stage={s} labels={props.content.labels} />
         ))}
         <Skills content={props.content} />

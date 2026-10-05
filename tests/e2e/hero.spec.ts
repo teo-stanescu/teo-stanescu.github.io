@@ -5,7 +5,8 @@ test("e2e-hero-above-stage0", async ({ page }) => {
   await page.goto("/");
   const h1 = page.locator("h1");
   await expect(h1).toHaveCount(1);
-  // The first h2 is Stage 0 once the stage task lands. The #main landmark follows the hero.
+  // The first h2 is Stage 3 (newest first). The #main landmark follows the hero.
+  await expect(page.locator("h2").first()).toContainText("Stage 3");
   const boundary = page.locator("h2, #main").first();
   const boundaryTop = (await boundary.boundingBox())!.y;
   const hasCv = existsSync("dist/cv.pdf");

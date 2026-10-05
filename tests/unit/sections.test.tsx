@@ -34,6 +34,14 @@ it("render-telemetry-idle-current", () => {
   expect(t).not.toMatch(/<(a|button|input|select|textarea)\b|tabindex/);
 });
 
+it("render-telemetry-idle-current-any-stage", () => {
+  const c: Content = { ...content, stages: [...content.stages].reverse() };
+  const t = aside(page(c));
+  expect(dd(t, "stage")).toBe("3 - Orbit");
+  expect(dd(t, "role")).toBe("Principal Engineer");
+  expect(/data-t="state"[^>]*>([^<]*)</.exec(t)![1]).toBe("Current");
+});
+
 it("render-telemetry-dash", () => {
   const { stage, role } = currentRole(content);
   const c: Content = {

@@ -127,7 +127,15 @@ test("e2e-telemetry-focus", async ({ page }) => {
 test("e2e-telemetry-anchor-load", async ({ page }) => {
   await ready(page, "/#stage-3");
   await expect(page.locator('.telemetry [data-t="stage"]')).toHaveText("3 - Orbit");
-  await expect(page.locator(ROLE)).toHaveText("Solution Architect");
+  await expect(page.locator(ROLE)).toHaveText("Principal Engineer");
+});
+
+test("e2e-telemetry-default-principal", async ({ page }) => {
+  await ready(page);
+  await expect(page.locator(ROLE)).toHaveText("Principal Engineer");
+  await expect(page.locator('.telemetry [data-t="state"]')).toHaveText("Current");
+  await expect(page.locator(".telemetry")).toHaveAttribute("data-idle", "Current");
+  await expect(page.locator("article.card h3").first()).toHaveText("Principal Engineer");
 });
 
 test("e2e-unknown-hash-idle", async ({ page }) => {
@@ -169,14 +177,20 @@ const STATE = '.telemetry [data-t="state"]';
 
 test("e2e-telemetry-between-stages", async ({ page }) => {
   await ready(page);
-  for (const id of ["stage-1", "stage-2", "stage-3"]) {
+  for (const id of ["stage-3", "stage-2", "stage-1", "stage-0"]) {
     await page.evaluate((id) => {
       const h2 = document.getElementById(id)!.querySelector("h2")!;
       window.scrollTo(0, h2.getBoundingClientRect().top + window.scrollY - window.innerHeight / 2);
     }, id);
     await page.waitForTimeout(150);
     const want = await expectedRole(page);
-    expect(want).not.toBeNull();
+    if (want === null) {
+      // Stage 3 is the first stage: its heading at the midline is above the first card.
+      expect(id).toBe("stage-3");
+      await expect(page.locator(STATE)).toHaveText("Current");
+      await expect(page.locator(ROLE)).toHaveText("Principal Engineer");
+      continue;
+    }
     await expect(page.locator(STATE)).toHaveText("In view");
     await expect(page.locator(ROLE)).toHaveText(want!);
   }
@@ -209,20 +223,20 @@ test("e2e-telemetry-hashchange-then-wheel", async ({ page }) => {
   await page.evaluate(() => {
     location.hash = "#stage-1";
   });
-  await expect(page.locator(ROLE)).toHaveText("Software Test Engineer");
+  await expect(page.locator(ROLE)).toHaveText("Full Stack Developer");
   await page.mouse.move(400, 400);
   await page.mouse.wheel(0, 2500);
   await page.waitForTimeout(400);
   await expect(page.locator(ROLE)).toHaveText((await expectedRole(page))!);
-  await expect(page.locator(ROLE)).not.toHaveText("Software Test Engineer");
+  await expect(page.locator(ROLE)).not.toHaveText("Full Stack Developer");
 });
 
 test("e2e-telemetry-pointerdown-unlocks", async ({ page }) => {
   await ready(page, "/#stage-1");
-  await expect(page.locator(ROLE)).toHaveText("Software Test Engineer");
+  await expect(page.locator(ROLE)).toHaveText("Full Stack Developer");
   await page.evaluate(() => window.scrollTo(0, 3000));
   await page.waitForTimeout(300);
-  await expect(page.locator(ROLE)).toHaveText("Software Test Engineer");
+  await expect(page.locator(ROLE)).toHaveText("Full Stack Developer");
   await page.mouse.move(5, 5);
   await page.mouse.down();
   await page.mouse.up();

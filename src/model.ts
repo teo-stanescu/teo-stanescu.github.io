@@ -132,9 +132,27 @@ export function teamSizeLabel(n: number | undefined, upTo?: string): string | nu
   return upTo ? `${upTo} ${n}` : String(n);
 }
 
+// Sort key reads `start` and the string "present" only. It never coerces `end`, which may be a todo().
+const isCurrent = (r: Role): boolean => r.dates.end === "present";
+
+export function sortRoles(roles: readonly Role[]): readonly Role[] {
+  return [...roles].sort((a, b) => {
+    const ca = isCurrent(a);
+    const cb = isCurrent(b);
+    if (ca !== cb) return ca ? -1 : 1;
+    return b.dates.start.year - a.dates.start.year || b.dates.start.month - a.dates.start.month;
+  });
+}
+
+export function orderedStages(c: Content): readonly Stage[] {
+  return [...c.stages].sort((a, b) => b.id - a.id).map((s) => ({ ...s, roles: sortRoles(s.roles) }));
+}
+
 export function currentRole(c: Content): { stage: Stage; role: Role } {
-  const stage = c.stages[c.stages.length - 1];
-  const role = stage?.roles.find((r) => r.dates.end === "present");
-  if (!stage || !role) throw new Error("No current role in the last stage");
-  return { stage, role };
+  const pairs = c.stages
+    .flatMap((s) => s.roles.map((role) => ({ stage: s, role })))
+    .filter((p) => p.role.dates.end === "present");
+  const [only] = pairs;
+  if (pairs.length !== 1 || !only) throw new Error("Expected exactly one current role");
+  return only;
 }

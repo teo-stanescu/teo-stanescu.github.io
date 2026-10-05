@@ -39,6 +39,9 @@ export function prerender(): Plugin {
             })
           ).module;
       const hasCv = existsSync(resolve(config.publicDir, "cv.pdf"));
+      if (!hasCv && config.command === "build") {
+        this.warn("public/cv.pdf is absent: the hero omits the CV button");
+      }
       return injectHtml(html, mod.render({ hasCv, base: config.base }));
     },
   };

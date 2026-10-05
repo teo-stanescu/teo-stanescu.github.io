@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.private/
+.private
+.worktrees/
+docs/guild/
+.claude/
+test-results/
+playwright-report/
+.lighthouse/
+*.log
+.DS_Store

@@ -70,7 +70,7 @@ export function startTelemetry(): void {
     else setIdle();
   };
 
-  // Ignore the observer after a hash match, until the first user input (D-05).
+  // Ignore the observer after a hash match, until the first user input, so the jump target stays shown.
   const UNLOCK = ["wheel", "touchstart", "pointerdown", "keydown", "focusin"] as const;
   let hashLocked = false;
   const unlock = () => {

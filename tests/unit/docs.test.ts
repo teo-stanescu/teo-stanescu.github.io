@@ -43,4 +43,21 @@ describe("docs", () => {
     expect(hook).toContain("test:local");
     expect(readme).toMatch(/pre-commit hook runs[^.]*local tests/);
   });
+
+  it("docs-no-internal-ids-in-comments", () => {
+    // Source comments say the reason in plain words. Planning IDs mean nothing to a public reader.
+    const re = new RegExp(["\\b(?:AC|E|D|U|QA|DEF)-\\d+\\b", "\\bTask \\d+\\b"].join("|"));
+    const files: string[] = [];
+    const walk = (d: string) => {
+      for (const e of readdirSync(d, { withFileTypes: true })) {
+        const p = `${d}/${e.name}`;
+        if (e.isDirectory()) walk(p);
+        else if (/\.(tsx?|mjs|css)$/.test(e.name) || d === ".githooks") files.push(p);
+      }
+    };
+    for (const d of ["src", "scripts", ".githooks", "tests/unit", "tests/e2e", "tests/dist"]) walk(d);
+    expect(files.length).toBeGreaterThan(20);
+    const hits = files.filter((f) => f !== "tests/unit/docs.test.ts" && re.test(read(f)));
+    expect(hits).toEqual([]);
+  });
 });

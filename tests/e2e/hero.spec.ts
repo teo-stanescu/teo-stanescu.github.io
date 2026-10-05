@@ -31,7 +31,7 @@ test("e2e-hero-above-stage0", async ({ page }) => {
     }
   }
   await expect(cv).toHaveCount(hasCv ? 1 : 0);
-  // AC-03 order: the CV link comes first among the hero actions.
+  // Order: the CV link comes first among the hero actions.
   const names = await page
     .locator("header.hero a:not(.skip-link)")
     .evaluateAll((els) => els.map((e) => e.textContent));

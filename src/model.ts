@@ -1,7 +1,7 @@
 export type Todo = { readonly todo: string };
 export type Text = string | Todo;
 // A Todo must never reach output. Any string or number coercion throws, so a Todo in a
-// template literal, String(), join(), an attribute or JSON fails the build (AC-09, E-06).
+// template literal, String(), join(), an attribute or JSON fails the build, so a missing fact never reaches the page.
 export const todo = (note: string): Todo => {
   const fail = (): never => {
     throw new Error(`Todo reached output: ${note}`);
@@ -34,7 +34,7 @@ export type YearMonth = { readonly year: number; readonly month: number }; // mo
 export type DateRange = { readonly start: YearMonth; readonly end: YearMonth | "present" | Todo };
 export type StageId = 0 | 1 | 2 | 3;
 
-// The allowed client descriptors of the spec (AC-25). Content can use no other value.
+// The only wording allowed for a client in public text. Content can use no other value.
 export const CLIENT_DESCRIPTORS = [
   "some of the largest banking and insurance customers, mostly in the UK and Europe",
   "American customers",
@@ -57,7 +57,7 @@ export interface Role {
   readonly decision: Text;
   readonly outcome: Text;
   readonly details: readonly Detail[]; // long bullets behind "Details"
-  readonly clientRefs?: readonly ClientDescriptor[]; // allowed descriptors used in this role's text (AC-25)
+  readonly clientRefs?: readonly ClientDescriptor[]; // allowed descriptors used in this role's text
 }
 
 export interface Stage {

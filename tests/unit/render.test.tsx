@@ -8,7 +8,7 @@ const opts = { hasCv: false, base: "/" };
 
 // Scope: render() reads the content it is given and not a cached module copy. The JSON-LD
 // description carries person.summary, so a changed summary shows in the head.
-// The AC-02 proof (dist/index.html after a build) belongs to Task 13: dist-content-edit-roundtrip.
+// The same proof on dist/index.html after a build is the test dist-content-edit-roundtrip.
 it("render-reads-content-argument", () => {
   const oldText = content.person.summary;
   const newText = "A brand new summary sentence for the test.";
@@ -36,7 +36,7 @@ it("render-head-tags", () => {
 });
 
 it("render-jsonld-person", () => {
-  // The field check below is the schema.org proof for AC-27 (QA-18).
+  // The field check below is the schema.org proof for the structured data.
   const { head } = render(opts);
   const m = /<script type="application\/ld\+json">([\s\S]*?)<\/script>/.exec(head);
   expect(m).not.toBeNull();

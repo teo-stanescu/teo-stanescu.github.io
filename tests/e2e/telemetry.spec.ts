@@ -91,7 +91,7 @@ test("e2e-telemetry-midline-200ms", async ({ page }) => {
     expect(n).toBeGreaterThan(5);
     const order = [...Array(n).keys()];
     const seen: string[] = [];
-    // Top to bottom, then bottom to top (E-08).
+    // Top to bottom, then bottom to top so a change of direction also updates.
     for (const i of [...order, ...[...order].reverse()]) {
       const p = await probeCard(page, i);
       checkProbe(p);

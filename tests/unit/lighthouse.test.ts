@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { medianScores, failing } from "../../scripts/lighthouse.mjs";
 
@@ -22,5 +23,15 @@ describe("lighthouse", () => {
       failing({ performance: 94, accessibility: 100, "best-practices": 100, seo: 100 }, 95),
     ).toEqual(["performance"]);
     expect(failing(med, 95)).toEqual([]);
+  });
+
+  it("lighthouse-builds-before-preview", () => {
+    const src = readFileSync("scripts/lighthouse.mjs", "utf8");
+    const build = src.indexOf('["run", "build"]');
+    const failFast = src.indexOf("if (build.status !== 0)");
+    const preview = src.indexOf('["run", "preview"]');
+    expect(build).toBeGreaterThan(-1);
+    expect(failFast).toBeGreaterThan(build);
+    expect(preview).toBeGreaterThan(failFast);
   });
 });

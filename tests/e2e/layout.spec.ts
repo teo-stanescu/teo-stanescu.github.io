@@ -156,15 +156,16 @@ test("e2e-rail-sticky-scrolls", async ({ page }) => {
 });
 
 test("e2e-nav-visible-without-nav-ready-1024", async ({ page }) => {
-  // The module cannot load, so nav-ready never comes. The "js" class stays.
+  // The module cannot load. After load the head script removes "js", so the plain list shows.
   await page.route("**/*.js", (r) => r.abort());
   await openAt(page, 1024, 800);
+  await page.waitForLoadState("load");
   const m = await page.evaluate(() => ({
     js: document.documentElement.classList.contains("js"),
     ready: document.documentElement.classList.contains("nav-ready"),
     display: getComputedStyle(document.querySelector("#nav")!).display,
   }));
-  expect(m.js).toBe(true);
+  expect(m.js).toBe(false);
   expect(m.ready).toBe(false);
   expect(m.display).not.toBe("none");
   await expect(page.locator("#nav a").first()).toBeVisible();
@@ -363,18 +364,6 @@ for (const [w, h] of [
           if (!e.hadRecentInput) (window as unknown as { __cls: number }).__cls += e.value;
         }
       }).observe({ type: "layout-shift", buffered: true });
-    });
-    // The late script collapses the plain nav list below 1280 px. That shift is a known cost and not
-    // part of this budget, so the test takes the nav out of the measure and checks the other additions.
-    await page.addInitScript(() => {
-      const st = document.createElement("style");
-      st.textContent = "#nav{display:none!important}";
-      const mo = new MutationObserver(() => {
-        if (!document.head) return;
-        document.head.append(st);
-        mo.disconnect();
-      });
-      mo.observe(document, { childList: true, subtree: true });
     });
     await page.route("**/assets/*.js", async (route) => {
       await new Promise((r) => setTimeout(r, 1500));

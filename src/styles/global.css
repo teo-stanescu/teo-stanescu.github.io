@@ -227,9 +227,9 @@ a:hover {
   padding-left: var(--s-2);
 }
 
-/* The popover state hides the list below 1280 px. Only a class that the script sets after a good start does this, never html.js alone. */
+/* Below 1280 px "js" hides the in-flow list from first paint, so a late script causes no shift. The head script removes "js" at load if the module did not set nav-ready, so the list shows again. */
 @media (max-width: 1279.98px) {
-  html.nav-ready .nav:not(:popover-open) {
+  html.js .nav:not(:popover-open) {
     display: none;
   }
 }

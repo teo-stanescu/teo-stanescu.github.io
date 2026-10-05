@@ -89,9 +89,13 @@ test("e2e-nontext-contrast-both-themes", async ({ page }) => {
 test("e2e-tab-order-visual", async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 });
   await page.goto("/");
+  // Only visible controls are Tab stops. Role links of inactive stages are hidden.
   const stops = await page.evaluate(() =>
-    [...document.querySelectorAll<HTMLElement>("a[href], summary, button, [tabindex]:not([tabindex='-1'])")].map(
-      (e, i) => {
+    [...document.querySelectorAll<HTMLElement>("a[href], summary, button, [tabindex]:not([tabindex='-1'])")]
+      .filter((e) => e.getClientRects().length > 0 && getComputedStyle(e).visibility !== "hidden")
+      .map((e, i) => {
+        // Mark the stop. The active nav entry changes while focus moves, so indexes must not depend on what shows later.
+        e.dataset.stop = String(i);
         const r = e.getBoundingClientRect();
         return {
           i,
@@ -100,25 +104,23 @@ test("e2e-tab-order-visual", async ({ page }) => {
           top: r.top + window.scrollY,
           left: r.left + window.scrollX,
         };
-      },
-    ),
+      }),
   );
   expect(stops[0].skip).toBe(true);
   // Visual order: skip link, the left rail (top to bottom), then the hero buttons and content.
   const byPos = (a: { top: number; left: number }, b: { top: number; left: number }) =>
     a.top - b.top || a.left - b.left;
   const rail = stops.filter((s) => s.nav).sort(byPos);
-  expect(rail.length).toBeGreaterThanOrEqual(15);
+  // The list holds every entry. Only the seven stage-level entries and the active roles are Tab stops.
+  expect(await page.locator("nav a[href]").count()).toBeGreaterThanOrEqual(15);
+  expect(rail.length).toBeGreaterThanOrEqual(7);
   const rest = stops.filter((s) => !s.skip && !s.nav).sort(byPos);
   const expected = [...rail, ...rest].map((s) => s.i);
   const seen: number[] = [];
   for (let n = 0; n < stops.length; n++) {
     await page.keyboard.press("Tab");
     seen.push(
-      await page.evaluate(() => {
-        const all = [...document.querySelectorAll("a[href], summary, button, [tabindex]:not([tabindex='-1'])")];
-        return all.indexOf(document.activeElement!);
-      }),
+      await page.evaluate(() => Number((document.activeElement as HTMLElement).dataset.stop ?? -1)),
     );
   }
   expect(seen.length).toBe(stops.length);
@@ -130,7 +132,10 @@ test("e2e-focus-visible", async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 });
   await page.goto("/");
   const count = await page.evaluate(
-    () => document.querySelectorAll("a[href], summary, button, [tabindex]:not([tabindex='-1'])").length,
+    () =>
+      [...document.querySelectorAll("a[href], summary, button, [tabindex]:not([tabindex='-1'])")].filter(
+        (e) => e.getClientRects().length > 0 && getComputedStyle(e).visibility !== "hidden",
+      ).length,
   );
   for (let i = 0; i < count; i++) {
     await page.keyboard.press("Tab");

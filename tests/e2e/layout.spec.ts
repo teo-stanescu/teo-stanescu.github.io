@@ -237,3 +237,27 @@ test("e2e-landscape-short", async ({ page }) => {
   const pos = await page.evaluate(() => getComputedStyle(document.querySelector(".telemetry")!).position);
   expect(pos).toBe("static");
 });
+
+for (const [w, h] of [
+  [768, 1024],
+  [1024, 768],
+] as const) {
+  test(`e2e-cls-delayed-script-${w}x${h}`, async ({ page }) => {
+    await page.setViewportSize({ width: w, height: h });
+    await page.addInitScript(() => {
+      (window as unknown as { __cls: number }).__cls = 0;
+      new PerformanceObserver((list) => {
+        for (const e of list.getEntries() as unknown as { value: number; hadRecentInput: boolean }[]) {
+          if (!e.hadRecentInput) (window as unknown as { __cls: number }).__cls += e.value;
+        }
+      }).observe({ type: "layout-shift", buffered: true });
+    });
+    await page.route("**/assets/*.js", async (route) => {
+      await new Promise((r) => setTimeout(r, 1500));
+      await route.continue();
+    });
+    await page.goto("/");
+    await page.waitForTimeout(2500);
+    expect(await page.evaluate(() => (window as unknown as { __cls: number }).__cls)).toBeLessThan(0.1);
+  });
+}

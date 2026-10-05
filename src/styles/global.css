@@ -193,18 +193,10 @@ footer {
 }
 
 @media (min-width: 768px) {
-  .hero,
-  main,
-  footer {
+  html.js .hero,
+  html.js main,
+  html.js footer {
     padding-right: calc(var(--panel-w) + 2rem);
-  }
-}
-
-@media (max-width: 767.98px) {
-  .hero,
-  main,
-  footer {
-    padding-right: 0;
   }
 }
 
@@ -570,9 +562,12 @@ html.motion .card-details summary::before {
 }
 
 /* Telemetry: panel at 768 px and wider */
+/* Without JavaScript the panel is a block in the content column. */
 .telemetry {
   position: static;
   z-index: 10;
+  margin: var(--s-4) 0 0 var(--lane);
+  padding: var(--s-3) var(--s-4);
   background: var(--surface);
   border: 1px solid var(--rule);
 }
@@ -602,11 +597,15 @@ html.js .telemetry {
 
 @media (min-width: 768px) {
   .telemetry {
-    top: 24px;
-    right: max(24px, calc((100vw - var(--container)) / 2 + 24px));
     width: var(--panel-w);
     padding: var(--s-4);
     border-radius: 8px;
+  }
+
+  html.js .telemetry {
+    margin: 0;
+    top: 24px;
+    right: max(24px, calc((100vw - var(--container)) / 2 + 24px));
   }
 
   .telemetry-state {
@@ -623,14 +622,19 @@ html.js .telemetry {
 /* Telemetry: bar below 768 px */
 @media (max-width: 767.98px) {
   .telemetry {
+    margin-right: var(--pad);
+    display: flex;
+    align-items: center;
+  }
+
+  html.js .telemetry {
+    margin: 0;
     top: 0;
     left: 0;
     right: 0;
     height: var(--bar-h);
     padding: 0 var(--s-4);
     border-width: 0 0 1px;
-    display: flex;
-    align-items: center;
   }
 
   .telemetry-state,
@@ -699,6 +703,45 @@ html.js .telemetry {
     position: static;
     height: auto;
     padding: var(--s-2) var(--s-4);
+  }
+}
+
+/* Card meta row: team size and focus, readable without JavaScript. */
+.card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-1) var(--s-4);
+  margin-top: var(--s-2);
+  font-family: var(--mono);
+  font-size: var(--fs-label);
+  color: var(--muted);
+}
+
+.card-meta div {
+  display: flex;
+  gap: var(--s-2);
+}
+
+.card-meta dt {
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.card-meta dd {
+  color: var(--text);
+}
+
+/* Reduced motion, as a second guard behind the client script. */
+@media (prefers-reduced-motion: reduce) {
+  html.motion .trajectory .drawn {
+    stroke-dashoffset: 0;
+  }
+
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+    animation: none !important;
   }
 }
 

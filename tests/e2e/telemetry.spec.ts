@@ -109,15 +109,19 @@ test("e2e-telemetry-midline-200ms", async ({ page }) => {
 
 test("e2e-telemetry-focus", async ({ page }) => {
   await ready(page);
-  const n = await page.locator("article.card").count();
-  for (let i = 0; i < n; i++) {
-    const card = page.locator("article.card").nth(i);
-    const title = (await card.locator("h3").textContent())!;
-    const summary = card.locator("summary");
-    if ((await summary.count()) === 0) continue;
-    await summary.focus();
+  const total = await page.locator("article.card summary").count();
+  let seen = 0;
+  for (let i = 0; i < 80 && seen < total; i++) {
+    await page.keyboard.press("Tab");
+    const title = await page.evaluate(() => {
+      const a = document.activeElement;
+      return a?.tagName === "SUMMARY" ? a.closest("article")!.querySelector("h3")!.textContent : null;
+    });
+    if (title === null) continue;
+    seen++;
     await expect(page.locator(ROLE)).toHaveText(title);
   }
+  expect(seen).toBe(total);
 });
 
 test("e2e-telemetry-anchor-load", async ({ page }) => {
@@ -139,10 +143,109 @@ test("e2e-unknown-hash-idle", async ({ page }) => {
 test("e2e-script-blocked-keeps-page", async ({ page }) => {
   await page.route("**/*.js", (r) => r.abort());
   await page.goto("/");
-  await expect(page.locator("html")).not.toHaveClass(/js/);
+  // The inline head script sets "js" before paint. The blocked module leaves the idle panel.
   await expect(page.locator(ROLE)).toHaveText("Principal Engineer");
   await expect(page.locator('.telemetry [data-t="state"]')).toHaveText("Current");
   const n = await page.locator("article.card").count();
   expect(n).toBeGreaterThan(5);
   for (let i = 0; i < n; i++) await expect(page.locator("article.card").nth(i)).toBeVisible();
+});
+
+// Title of the card under the midline, the last card above it, or null above the first card.
+async function expectedRole(page: Page): Promise<string | null> {
+  return page.evaluate(() => {
+    const mid = window.innerHeight / 2;
+    let cur: Element | null = null;
+    for (const c of document.querySelectorAll("article.card")) {
+      const r = c.getBoundingClientRect();
+      if (r.top > mid) break;
+      cur = c;
+      if (r.bottom > mid) break;
+    }
+    return cur ? cur.querySelector("h3")!.textContent : null;
+  });
+}
+const STATE = '.telemetry [data-t="state"]';
+
+test("e2e-telemetry-between-stages", async ({ page }) => {
+  await ready(page);
+  for (const id of ["stage-1", "stage-2", "stage-3"]) {
+    await page.evaluate((id) => {
+      const h2 = document.getElementById(id)!.querySelector("h2")!;
+      window.scrollTo(0, h2.getBoundingClientRect().top + window.scrollY - window.innerHeight / 2);
+    }, id);
+    await page.waitForTimeout(150);
+    const want = await expectedRole(page);
+    expect(want).not.toBeNull();
+    await expect(page.locator(STATE)).toHaveText("In view");
+    await expect(page.locator(ROLE)).toHaveText(want!);
+  }
+});
+
+test("e2e-telemetry-end-and-top", async ({ page }) => {
+  await ready(page);
+  await page.bringToFront();
+  await page.keyboard.press("End");
+  await page.waitForFunction(
+    () => window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 2,
+    undefined,
+    { polling: 50 },
+  );
+  await expect(page.locator(STATE)).toHaveText("In view");
+  await expect(page.locator(ROLE)).toHaveText(
+    (await page.locator("article.card h3").last().textContent())!,
+  );
+  // Chromium can drop a key that arrives while the End scroll animation settles, so retry.
+  await expect(async () => {
+    await page.keyboard.press("Home");
+    await page.waitForTimeout(150);
+    expect(await page.evaluate(() => window.scrollY)).toBe(0);
+  }).toPass({ timeout: 10_000 });
+  await expect(page.locator(STATE)).toHaveText("Current");
+});
+
+test("e2e-telemetry-hashchange-then-wheel", async ({ page }) => {
+  await ready(page);
+  await page.evaluate(() => {
+    location.hash = "#stage-1";
+  });
+  await expect(page.locator(ROLE)).toHaveText("Software Test Engineer");
+  await page.mouse.move(400, 400);
+  await page.mouse.wheel(0, 2500);
+  await page.waitForTimeout(400);
+  await expect(page.locator(ROLE)).toHaveText((await expectedRole(page))!);
+  await expect(page.locator(ROLE)).not.toHaveText("Software Test Engineer");
+});
+
+test("e2e-telemetry-pointerdown-unlocks", async ({ page }) => {
+  await ready(page, "/#stage-1");
+  await expect(page.locator(ROLE)).toHaveText("Software Test Engineer");
+  await page.evaluate(() => window.scrollTo(0, 3000));
+  await page.waitForTimeout(300);
+  await expect(page.locator(ROLE)).toHaveText("Software Test Engineer");
+  await page.mouse.move(5, 5);
+  await page.mouse.down();
+  await page.mouse.up();
+  await expect(page.locator(ROLE)).toHaveText((await expectedRole(page))!);
+});
+
+test("e2e-telemetry-main-hash-ignored", async ({ page }) => {
+  await ready(page);
+  await page.evaluate(() => {
+    location.hash = "#main";
+  });
+  await page.evaluate(() => window.scrollTo(0, 2600));
+  await page.waitForTimeout(300);
+  await expect(page.locator(ROLE)).toHaveText((await expectedRole(page))!);
+});
+
+test("e2e-telemetry-resize", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await ready(page);
+  await page.evaluate(() => window.scrollTo(0, 2200));
+  await page.waitForTimeout(300);
+  await page.setViewportSize({ width: 768, height: 1024 });
+  await page.waitForTimeout(300);
+  await expect(page.locator(ROLE)).toHaveText((await expectedRole(page))!);
+  await expect(page.locator(".telemetry")).toHaveCSS("position", "fixed");
 });

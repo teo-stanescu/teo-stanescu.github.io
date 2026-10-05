@@ -80,3 +80,20 @@ test.describe("reduced motion", () => {
     expect(bad).toEqual([]);
   });
 });
+
+test("e2e-reduced-motion-live-switch", async ({ page }) => {
+  await page.goto("/");
+  await page.waitForSelector("html.js.motion");
+  const max = await maxScroll(page);
+  await scrollTo(page, max / 2);
+  expect((await drawn(page)).offset).toBeGreaterThan(0.2);
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await expect(page.locator("html")).not.toHaveClass(/motion/);
+  expect((await drawn(page)).offset).toBe(0);
+  const dur = await page.evaluate(() =>
+    getComputedStyle(document.querySelector(".stage h2")!, "::before").transitionDuration,
+  );
+  expect(dur.split(",").every((d) => d.trim() === "0s")).toBe(true);
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await expect(page.locator("html")).toHaveClass(/motion/);
+});

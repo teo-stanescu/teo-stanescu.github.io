@@ -93,6 +93,17 @@ export interface Labels {
   readonly notStated: string;
   readonly dash: string;
   readonly present: string;
+  readonly navTop: string;
+  readonly navSkills: string;
+  readonly search: string;
+  readonly contents: string;
+  readonly placeholder: string;
+  readonly placeholderTouch: string;
+  readonly noMatches: string;
+  readonly of: string;
+  readonly next: string;
+  readonly previous: string;
+  readonly results: string;
 }
 
 export interface Content {

@@ -171,3 +171,7 @@ it("render-card-meta", () => {
   const none = cardHtml({ ...base, focus: todo("x") });
   expect(none).not.toContain("card-meta");
 });
+
+it("render-card-heading-id", () => {
+  expect(cardHtml(base)).toContain('<h3 id="x-heading">Title</h3>');
+});

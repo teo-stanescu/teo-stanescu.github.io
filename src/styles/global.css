@@ -38,6 +38,7 @@
   --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 
   --container: 70rem;
+  --rail-w: min(13rem, 208px);
   --pad: 1rem;
   --track: 12px;
   --lane: 24px;
@@ -72,6 +73,13 @@
 @media (min-width: 1024px) {
   :root {
     --panel-w: 15rem;
+  }
+}
+
+/* From 768 px the topbar slot is a fixed 48 px bar. The script fills it. Space is reserved from the first frame. */
+@media (min-width: 768px) {
+  html.js {
+    --bar-h: 3rem;
   }
 }
 
@@ -163,6 +171,101 @@ a {
 
 a:hover {
   text-decoration-thickness: 2px;
+}
+
+/* Topbar slot: empty and hidden unless the script is on. */
+.topbar {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  html.js .topbar {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: var(--bar-h);
+    z-index: 15;
+    background: var(--surface);
+    border-bottom: 1px solid var(--rule);
+  }
+}
+
+/* Nav list. Without JavaScript it is a plain list before the hero. */
+.nav {
+  padding: var(--s-4) var(--pad) 0 calc(var(--pad) + var(--lane));
+  font-size: var(--fs-small);
+  line-height: 1.4;
+}
+
+.nav ul {
+  list-style: none;
+  padding: 0;
+}
+
+.nav ul ul {
+  padding-left: var(--s-4);
+}
+
+.nav a {
+  display: block;
+  padding: var(--s-1) 0;
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.nav a:hover {
+  color: var(--text);
+  text-decoration: underline;
+}
+
+.nav a[aria-current="location"] {
+  color: var(--accent);
+  box-shadow: inset 2px 0 0 var(--accent);
+  padding-left: var(--s-2);
+}
+
+/* With JavaScript the list becomes a popover below 1280 px (next task). Until then hide it, so the page does not shift. */
+@media (max-width: 1279.98px) {
+  html.js .nav {
+    display: none;
+  }
+}
+
+/* Rail from 1280 px. It sits in the left padding of #root and never depends on html.js. */
+@media (min-width: 1280px) {
+  #root {
+    max-width: calc(var(--container) + var(--rail-w));
+    padding-left: var(--rail-w);
+    display: grid;
+    grid-template-columns: 0 minmax(0, 1fr);
+    align-items: start;
+  }
+
+  #root > * {
+    grid-column: 2;
+  }
+
+  #root > .nav {
+    grid-column: 1;
+    grid-row: 1 / span 20;
+    justify-self: start;
+    position: sticky;
+    top: calc(var(--bar-h) + 1rem);
+    width: calc(var(--rail-w) - 2 * var(--s-4));
+    margin-left: calc(-1 * var(--rail-w) + var(--s-4));
+    max-height: calc(100vh - var(--bar-h) - 2rem);
+    overflow-y: auto;
+    padding: var(--s-2) var(--s-2) var(--s-2) 0;
+  }
+}
+
+@media print {
+  .nav,
+  .topbar {
+    display: none !important;
+  }
 }
 
 .skip-link:not(:focus) {
@@ -603,12 +706,18 @@ html.js .telemetry {
 
   html.js .telemetry {
     margin: 0;
-    top: 24px;
+    top: calc(var(--bar-h) + 24px);
     right: max(24px, calc((100vw - var(--container)) / 2 + 24px));
   }
 
   .telemetry-state {
     margin-bottom: var(--s-3);
+  }
+}
+
+@media (min-width: 1280px) {
+  html.js .telemetry {
+    right: max(24px, calc((100vw - var(--container) - var(--rail-w)) / 2 + 24px));
   }
 }
 

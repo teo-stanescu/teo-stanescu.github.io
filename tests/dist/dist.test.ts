@@ -52,7 +52,23 @@ describe("dist", () => {
     const { seo: _seo, ...rest } = content;
     // The CV label shows only when public/cv.pdf exists (dist-cv-link-matches-file).
     // "telemetry" is an aria-label. "inView" and "notStated" are written by script only.
-    const { cv: cvLabel, telemetry: _t, inView: _i, notStated: _n, ...labels } = rest.labels;
+    // The search and contents labels sit in data-* attributes on the topbar slot. Script uses them.
+    const {
+      cv: cvLabel,
+      telemetry: _t,
+      inView: _i,
+      notStated: _n,
+      search: _s1,
+      contents: _s2,
+      placeholder: _s3,
+      placeholderTouch: _s4,
+      noMatches: _s5,
+      of: _s6,
+      next: _s7,
+      previous: _s8,
+      results: _s9,
+      ...labels
+    } = rest.labels;
     const strings: string[] = [];
     collect({ ...rest, labels }, strings);
     if (existsSync("public/cv.pdf")) strings.push(cvLabel);
@@ -83,6 +99,18 @@ describe("dist", () => {
     const head = /<head>\s*([\s\S]*?)<\/head>/.exec(html)![1]!;
     expect(head.startsWith("<script>")).toBe(true);
     expect(/^<script>([^<]*)<\/script>/.exec(head)![1]).toContain('classList.add("js")');
+  });
+
+  it("dist-nojs-no-controls", () => {
+    const body = /<body[^>]*>([\s\S]*)<\/body>/.exec(html)![1]!.replace(/<script[\s\S]*?<\/script>/g, "");
+    expect(body).not.toMatch(/<input[\s>]/);
+    expect(body).not.toMatch(/<button[\s>]/);
+    const text = decode(body.replace(/<[^>]+>/g, " "));
+    expect(text).not.toContain(content.labels.contents);
+    expect(text).not.toContain(content.labels.placeholder);
+    expect(text).not.toContain(content.labels.placeholderTouch);
+    expect(text).not.toContain(content.labels.noMatches);
+    expect(body).toContain('id="topbar"');
   });
 
   it("dist-no-todo", () => {

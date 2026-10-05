@@ -24,7 +24,7 @@ export function RoleCard(props: { role: Role; stageName: string; labels: Labels 
       data-focus={present(role.focus) ? role.focus : ""}
     >
       <header className="card-header">
-        <h3>{role.title}</h3>
+        <h3 id={`${role.id}-heading`}>{role.title}</h3>
         <p className="card-dates">{formatRange(role.dates, labels.present)}</p>
       </header>
       {present(role.org) ? <p className="card-org">{role.org}</p> : null}

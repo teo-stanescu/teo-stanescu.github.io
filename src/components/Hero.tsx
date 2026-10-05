@@ -6,10 +6,7 @@ export function Hero(props: { content: Content; hasCv: boolean; base: string }) 
   const { person, labels } = props.content;
   const line = person.positioning;
   return (
-    <header className="hero">
-      <a className="skip-link" href="#main">
-        {labels.skip}
-      </a>
+    <header className="hero" id="top">
       <p className="eyebrow">{labels.eyebrow}</p>
       <h1>{person.name}</h1>
       <p className="hero-title">{person.title}</p>

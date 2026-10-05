@@ -96,6 +96,24 @@ test.describe("without JavaScript", () => {
     }
   });
 
+  test("e2e-nojs-nav-list", async ({ page }) => {
+    for (const w of [360, 1280]) {
+      await page.setViewportSize({ width: w, height: 800 });
+      await page.goto("/");
+      const links = page.locator("#nav a");
+      const n = await links.count();
+      expect(n).toBeGreaterThanOrEqual(15);
+      for (let i = 0; i < n; i++) await expect(links.nth(i), `${w} link ${i}`).toBeVisible();
+      await page.locator('#nav a[href="#stage-1"]').click();
+      expect(new URL(page.url()).hash).toBe("#stage-1");
+      const top = await page.evaluate(() => document.getElementById("stage-1")!.getBoundingClientRect().top);
+      expect(top).toBeLessThan(400);
+      await page.goto("/");
+      await page.locator("#nav a[href$='-heading']").first().click();
+      expect(new URL(page.url()).hash).toMatch(/-heading$/);
+    }
+  });
+
   test("e2e-nojs-panel-aligned-1280", async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 800 });
     await page.goto("/");
@@ -104,6 +122,9 @@ test.describe("without JavaScript", () => {
     const track = (await page.locator(".trajectory").boundingBox())!;
     expect(Math.abs(panel.x - h1.x)).toBeLessThanOrEqual(2);
     expect(panel.x).toBeGreaterThanOrEqual(track.x + track.width);
+    const nav = (await page.locator("#nav").boundingBox())!;
+    expect(nav.x + nav.width).toBeLessThanOrEqual(h1.x);
+    expect(nav.x + nav.width).toBeLessThanOrEqual(track.x);
     const main = (await page.locator("main").boundingBox())!;
     expect(panel.y + panel.height).toBeLessThanOrEqual(main.y + 1);
   });

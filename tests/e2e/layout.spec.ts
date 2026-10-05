@@ -1,6 +1,7 @@
 import { test, expect, type Page } from "@playwright/test";
 
-const WIDTHS = [360, 768, 1280, 2560];
+const WIDTHS = [360, 768, 1024, 1280, 1920, 2560];
+const RAIL_WIDTHS = [1265, 1280, 1440, 1920, 2560];
 
 // Leaf text elements: own a non-empty text node, not visually hidden.
 const COLLECT_TEXT = `(() => {
@@ -76,9 +77,13 @@ test("e2e-no-text-overlap", async ({ page }) => {
     await openAt(page, w, 900);
     const hits = await page.evaluate(`(() => {
       const els = ${COLLECT_TEXT};
-      const tele = document.querySelector(".telemetry");
       const all = [...els];
-      if (tele && !all.includes(tele)) all.push(tele);
+      // Boxes of the telemetry panel, the rail and the topbar count too (TG-08).
+      for (const sel of [".telemetry", ".nav", ".topbar"]) {
+        const el = document.querySelector(sel);
+        if (!el || getComputedStyle(el).display === "none") continue;
+        if (!all.includes(el)) all.push(el);
+      }
       const rects = all.map((el) => ({ el, r: el.getBoundingClientRect() }));
       const bad = [];
       for (let i = 0; i < rects.length; i++) {
@@ -93,6 +98,60 @@ test("e2e-no-text-overlap", async ({ page }) => {
       return bad;
     })()`);
     expect(hits, `width ${w}`).toEqual([]);
+  }
+});
+
+test("e2e-rail-1280-no-overlap", async ({ page }) => {
+  for (const w of RAIL_WIDTHS) {
+    await openAt(page, w, 900);
+    for (const y of [0, 1500]) {
+      await page.evaluate((top) => window.scrollTo(0, top), y);
+      const r = (await page.evaluate(`(() => {
+        const boxes = [];
+        const add = (name, el) => {
+          if (!el || getComputedStyle(el).display === "none") return;
+          const r = el.getBoundingClientRect();
+          boxes.push({ name, l: r.left, r: r.right, t: r.top, b: r.bottom });
+        };
+        add("rail", document.querySelector("#nav"));
+        add("telemetry", document.querySelector(".telemetry"));
+        add("trajectory", document.querySelector(".trajectory"));
+        document.querySelectorAll(".hero > *").forEach((e, i) => add("hero" + i, e));
+        document.querySelectorAll(".stage").forEach((e, i) => add("stage" + i, e));
+        const bad = [];
+        for (let i = 0; i < boxes.length; i++) {
+          for (let j = i + 1; j < boxes.length; j++) {
+            const a = boxes[i], b = boxes[j];
+            const x = Math.min(a.r, b.r) - Math.max(a.l, b.l);
+            const yy = Math.min(a.b, b.b) - Math.max(a.t, b.t);
+            if (x > 0.5 && yy > 0.5) bad.push(a.name + " | " + b.name);
+          }
+        }
+        return { bad, rail: boxes.some((b) => b.name === "rail"), sw: document.documentElement.scrollWidth, iw: innerWidth };
+      })()`)) as { bad: string[]; rail: boolean; sw: number; iw: number };
+      expect(r.bad, `width ${w} scroll ${y}`).toEqual([]);
+      expect(r.sw, `width ${w}`).toBeLessThanOrEqual(r.iw);
+      if (w >= 1280) expect(r.rail, `rail shows at ${w}`).toBe(true);
+    }
+  }
+});
+
+test("e2e-rail-sticky-scrolls", async ({ page }) => {
+  await openAt(page, 1280, 600);
+  const css = await page.evaluate(() => {
+    const n = getComputedStyle(document.querySelector("#nav")!);
+    return { pos: n.position, oy: n.overflowY };
+  });
+  expect(css.pos).toBe("sticky");
+  expect(css.oy).toBe("auto");
+  for (const y of [0, 800, 3000, 100000]) {
+    await page.evaluate((top) => window.scrollTo(0, top), y);
+    const b = await page.evaluate(() => {
+      const r = document.querySelector("#nav")!.getBoundingClientRect();
+      return { t: r.top, b: r.bottom, h: innerHeight };
+    });
+    expect(b.t, `scroll ${y}`).toBeGreaterThanOrEqual(0);
+    expect(b.b, `scroll ${y}`).toBeLessThanOrEqual(b.h);
   }
 });
 
@@ -148,7 +207,10 @@ test("e2e-bar-covers-no-text", async ({ page }) => {
     // Case 3: Tab to each control; its top is at or below the bar bottom.
     await page.goto("/");
     const count = await page.evaluate(
-      () => document.querySelectorAll("a[href], summary, button, [tabindex]:not([tabindex='-1'])").length,
+      () =>
+        [...document.querySelectorAll("a[href], summary, button, [tabindex]:not([tabindex='-1'])")].filter(
+          (e) => e.getClientRects().length > 0,
+        ).length,
     );
     const barBottom = () =>
       page.evaluate(() => {

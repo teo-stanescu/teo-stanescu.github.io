@@ -96,6 +96,7 @@ test("e2e-tab-order-visual", async ({ page }) => {
         return {
           i,
           skip: e.classList.contains("skip-link"),
+          nav: !!e.closest("nav"),
           top: r.top + window.scrollY,
           left: r.left + window.scrollX,
         };
@@ -103,10 +104,13 @@ test("e2e-tab-order-visual", async ({ page }) => {
     ),
   );
   expect(stops[0].skip).toBe(true);
-  const expected = stops
-    .filter((s) => !s.skip)
-    .sort((a, b) => a.top - b.top || a.left - b.left)
-    .map((s) => s.i);
+  // Visual order: skip link, the left rail (top to bottom), then the hero buttons and content.
+  const byPos = (a: { top: number; left: number }, b: { top: number; left: number }) =>
+    a.top - b.top || a.left - b.left;
+  const rail = stops.filter((s) => s.nav).sort(byPos);
+  expect(rail.length).toBeGreaterThanOrEqual(15);
+  const rest = stops.filter((s) => !s.skip && !s.nav).sort(byPos);
+  const expected = [...rail, ...rest].map((s) => s.i);
   const seen: number[] = [];
   for (let n = 0; n < stops.length; n++) {
     await page.keyboard.press("Tab");

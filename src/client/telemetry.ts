@@ -1,4 +1,6 @@
 // Telemetry panel updates (ADR 0002). Reads data-* attributes only.
+import { atMidline, onFrame } from "./scroll";
+
 const KEYS = ["stage", "role", "years", "team", "focus"] as const;
 type Key = (typeof KEYS)[number];
 
@@ -58,14 +60,7 @@ export function startTelemetry(): void {
 
   // The card under the midline. Between cards, the last card above it. Above the first card: none.
   const sync = () => {
-    const mid = window.innerHeight / 2;
-    let current: HTMLElement | null = null;
-    for (const c of cards) {
-      const r = c.getBoundingClientRect();
-      if (r.top > mid) break;
-      current = c;
-      if (r.bottom > mid) break;
-    }
+    const current = atMidline(cards);
     if (current) setActive(current);
     else setIdle();
   };
@@ -93,18 +88,10 @@ export function startTelemetry(): void {
     { rootMargin: "-50% 0px -50% 0px" },
   );
   for (const c of cards) io.observe(c);
-  // The observer misses a jump into a gap between cards, so scroll and resize also sync.
-  let queued = false;
-  const schedule = () => {
-    if (queued || hashLocked) return;
-    queued = true;
-    requestAnimationFrame(() => {
-      queued = false;
-      if (!hashLocked) sync();
-    });
-  };
-  window.addEventListener("scroll", schedule, { passive: true });
-  window.addEventListener("resize", schedule, { passive: true });
+  // The observer misses a jump into a gap between cards, so the scroll frame also syncs.
+  onFrame(() => {
+    if (!hashLocked) sync();
+  });
 
   document.addEventListener("focusin", (e) => {
     const card = (e.target as Element | null)?.closest?.<HTMLElement>("article.card");

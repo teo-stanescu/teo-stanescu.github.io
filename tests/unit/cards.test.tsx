@@ -1,4 +1,5 @@
 import { it, expect } from "vitest";
+import { readFileSync } from "node:fs";
 import { renderToStaticMarkup } from "react-dom/server";
 import { App } from "../../src/components/App";
 import { RoleCard } from "../../src/components/RoleCard";
@@ -87,6 +88,18 @@ it("render-lang-de-phrase", () => {
   expect(page.match(/lang="de"/g)).toHaveLength(1);
 });
 
+it("render-stage-label-before-heading", () => {
+  const out = pageHtml();
+  for (const s of content.stages) {
+    const label = out.indexOf(`<p class="stage-label">${s.label}</p>`);
+    const h2 = out.indexOf(`<h2>${s.heading}</h2>`);
+    expect(label, s.label).toBeGreaterThan(-1);
+    expect(label, `${s.label} before its heading in the DOM`).toBeLessThan(h2);
+  }
+  // No CSS reordering.
+  expect(readFileSync("src/styles/global.css", "utf8")).not.toMatch(/\border\s*:/);
+});
+
 it("render-heading-levels", () => {
   let prev = 0;
   for (const h of tags(pageHtml(), "h[1-6]")) {
@@ -134,13 +147,6 @@ it("render-summary-names-role", () => {
   );
   expect(names.length).toBeGreaterThan(0);
   expect(new Set(names).size).toBe(names.length);
-});
-
-it("render-stage-label-after-heading", () => {
-  const s = content.stages[0]!;
-  expect(pageHtml()).toContain(
-    `<h2>${s.heading}</h2><p class="stage-label">${s.label}</p>`,
-  );
 });
 
 it("render-card-meta", () => {

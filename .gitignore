@@ -3,6 +3,7 @@
 .private/
 .private
 .worktrees/
+actions-runner/
 docs/guild/
 .claude/
 test-results/

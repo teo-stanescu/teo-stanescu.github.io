@@ -6,6 +6,7 @@ export default tseslint.config(
       "**/test-results/**",
       "**/playwright-report/**",
       ".worktrees/**",
+      "actions-runner/**",
       ".private/**",
       "docs/guild/**",
       ".claude/**",

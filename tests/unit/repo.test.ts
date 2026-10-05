@@ -14,6 +14,7 @@ describe("repo scaffold", () => {
       ".private/",
       ".private",
       ".worktrees/",
+      "actions-runner/",
       "docs/guild/",
       ".claude/",
       "/node_modules",
@@ -43,7 +44,7 @@ describe("repo scaffold", () => {
     const hits: string[] = [];
     const walk = (dir: string) => {
       for (const name of readdirSync(dir)) {
-        if (["node_modules", "dist", ".git", ".private", "docs", ".worktrees"].includes(name)) continue;
+        if (["node_modules", "dist", ".git", ".private", "docs", ".worktrees", "actions-runner"].includes(name)) continue;
         const p = join(dir, name);
         if (statSync(p).isDirectory()) walk(p);
         else if (/\.(ts|tsx|js|json|html)$/.test(name) && /\bbase\s*:\s*["'`]/.test(read(p))) {
@@ -93,10 +94,18 @@ describe("repo ci", () => {
   });
 });
 
+describe("repo workflow runner", () => {
+  it("repo-workflow-self-hosted", () => {
+    const wf = read(".github/workflows/deploy.yml");
+    const runsOn = [...wf.matchAll(/runs-on:\s*(\S+)/g)].map((m) => m[1]);
+    expect(runsOn).toEqual(["self-hosted", "self-hosted"]);
+  });
+});
+
 describe("repo eslint", () => {
   it("eslint-ignores-worktrees-and-dist", async () => {
     const eslint = new ESLint();
-    for (const p of [".worktrees/x/a.ts", ".worktrees/x/dist/m.js", "dist/a.js", "a/dist/m.js", "playwright-report/a.js"]) {
+    for (const p of [".worktrees/x/a.ts", ".worktrees/x/dist/m.js", "dist/a.js", "a/dist/m.js", "playwright-report/a.js", "actions-runner/externals/node20/lib/a.js"]) {
       expect(await eslint.isPathIgnored(join(process.cwd(), p)), p).toBe(true);
     }
   });

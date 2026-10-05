@@ -87,13 +87,16 @@
   box-sizing: border-box;
 }
 
-html {
+html.js {
   scroll-padding-top: var(--clear);
+}
+
+html.js body {
+  padding-top: var(--bar-h);
 }
 
 body {
   margin: 0;
-  padding-top: var(--bar-h);
   background: var(--bg);
   color: var(--text);
   font-family: var(--sans);
@@ -279,6 +282,11 @@ footer {
 
 .hero-line {
   margin-top: var(--s-5);
+}
+
+.hero-summary {
+  margin-top: var(--s-5);
+  max-width: 60ch;
 }
 
 .hero-actions {
@@ -563,10 +571,14 @@ html.motion .card-details summary::before {
 
 /* Telemetry: panel at 768 px and wider */
 .telemetry {
-  position: fixed;
+  position: static;
   z-index: 10;
   background: var(--surface);
   border: 1px solid var(--rule);
+}
+
+html.js .telemetry {
+  position: fixed;
 }
 
 .telemetry dl {
@@ -683,7 +695,7 @@ html.motion .card-details summary::before {
     --bar-h: 0px;
   }
 
-  .telemetry {
+  html.js .telemetry {
     position: static;
     height: auto;
     padding: var(--s-2) var(--s-4);

@@ -56,3 +56,12 @@ it("render-hero-omits-todo-line", () => {
     new RegExp(`${content.person.location}</p><p class="hero-line">${line}</p>`),
   );
 });
+
+it("render-hero-summary", () => {
+  const out = html({ hasCv: true, positioning: "One positioning sentence." });
+  const esc = content.person.summary.replace(/"/g, "&quot;").replace(/'/g, "&#x27;");
+  expect(out).toContain(`<p class="hero-summary">${esc}</p><div class="hero-actions">`);
+  expect(out.indexOf("hero-line")).toBeLessThan(out.indexOf("hero-summary"));
+  const noLine = html({ hasCv: false, positioning: todo("x") });
+  expect(noLine).toMatch(new RegExp(`${content.person.location}</p><p class="hero-summary">`));
+});

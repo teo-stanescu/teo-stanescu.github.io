@@ -48,3 +48,15 @@ test("e2e-skip-link-focuses-main", async ({ page }) => {
   await page.keyboard.press("Tab");
   expect(await page.evaluate(() => document.activeElement?.tagName)).toBe("SUMMARY");
 });
+
+test("e2e-hero-summary-before-buttons", async ({ page }) => {
+  await page.goto("/");
+  const summary = page.locator(".hero-summary");
+  await expect(summary).toBeVisible();
+  const s = (await summary.boundingBox())!;
+  const loc = (await page.locator(".hero-location").boundingBox())!;
+  const actions = (await page.locator(".hero-actions").boundingBox())!;
+  expect(s.y).toBeGreaterThanOrEqual(loc.y + loc.height);
+  expect(s.y + s.height).toBeLessThanOrEqual(actions.y + 1);
+  expect(s.width).toBeLessThanOrEqual(61 * 18);
+});

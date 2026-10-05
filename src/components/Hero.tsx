@@ -15,6 +15,7 @@ export function Hero(props: { content: Content; hasCv: boolean; base: string }) 
       <p className="hero-title">{person.title}</p>
       <p className="hero-location">{person.location}</p>
       {present(line) ? <p className="hero-line">{line}</p> : null}
+      <p className="hero-summary">{person.summary}</p>
       <div className="hero-actions">
         {props.hasCv ? (
           <a className="btn btn-primary" href={`${props.base}cv.pdf`}>

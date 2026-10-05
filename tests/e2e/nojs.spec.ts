@@ -6,6 +6,7 @@ test.describe("without JavaScript", () => {
   test("e2e-nojs-all-text", async ({ page }) => {
     await page.goto("/");
     for (const sel of [
+      ".hero-summary",
       "h2",
       "h3",
       ".card-part p",

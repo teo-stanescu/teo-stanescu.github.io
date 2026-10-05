@@ -22,7 +22,8 @@ it("render-hero-fields", () => {
   expect(out).toMatch(/<a [^>]*href="#main"[^>]*>Skip to content<\/a>/);
   expect(out).toContain(`href="${GITHUB_URL}"`);
   expect(out).toContain('href="mailto:teo.st95@gmail.com"');
-  const hrefs = [...out.matchAll(/<a [^>]*href="([^"]*)"/g)].map((m) => m[1]);
+  const hero = /<header class="hero"[\s\S]*?<\/header>/.exec(out)![0];
+  const hrefs = [...hero.matchAll(/<a [^>]*href="([^"]*)"/g)].map((m) => m[1]);
   expect(hrefs).toEqual(["#main", "/cv.pdf", GITHUB_URL, "mailto:teo.st95@gmail.com"]);
   expect(out).not.toContain("target=");
 });

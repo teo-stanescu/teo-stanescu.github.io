@@ -36,7 +36,10 @@ it("render-stage-order", () => {
 });
 
 it("render-stage-membership", () => {
-  const parts = pageHtml().split('<section class="stage" id="stage-').slice(1);
+  const parts = pageHtml()
+    .split('<section class="stage" id="stage-')
+    .slice(1)
+    .map((p) => p.split("</section>")[0]!);
   expect(parts).toHaveLength(content.stages.length);
   content.stages.forEach((s, i) => {
     expect(parts[i]!.startsWith(`${s.id}"`)).toBe(true);

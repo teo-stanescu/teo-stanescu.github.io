@@ -36,6 +36,7 @@ export interface Role {
   readonly org: Text; // employer or school with place, from the brief
   readonly dates: DateRange;
   readonly teamSize?: number; // only 12, 6, 5 where the brief gives it
+  readonly teamSizeUpTo?: true; // the brief says "up to": the label adds the words from Labels.upTo
   readonly focus: Text; // short phrase for the telemetry FOCUS row
   readonly context: Text;
   readonly decision: Text;
@@ -75,6 +76,7 @@ export interface Labels {
   readonly tRole: string;
   readonly tYears: string;
   readonly tTeam: string;
+  readonly upTo: string;
   readonly tFocus: string;
   readonly current: string;
   readonly inView: string;
@@ -115,8 +117,9 @@ export function formatRange(r: DateRange, presentLabel = "Present"): string {
   return `${start} – ${formatYearMonth(r.end)}`;
 }
 
-export function teamSizeLabel(n: number | undefined): string | null {
-  return n === undefined ? null : String(n);
+export function teamSizeLabel(n: number | undefined, upTo?: string): string | null {
+  if (n === undefined) return null;
+  return upTo ? `${upTo} ${n}` : String(n);
 }
 
 export function currentRole(c: Content): { stage: Stage; role: Role } {

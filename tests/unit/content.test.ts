@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { scanText } from "../../scripts/check-private.mjs";
 import { content } from "../../src/content";
-import { CLIENT_DESCRIPTORS, present, type Role, type Todo } from "../../src/model";
+import { CLIENT_DESCRIPTORS, present, teamSizeLabel, type Role, type Todo } from "../../src/model";
 
 const roles = (): Role[] => content.stages.flatMap((s) => [...s.roles]);
 const role = (id: string): Role => {
@@ -48,6 +48,18 @@ describe("content", () => {
     const others = roles().filter((r) => !["principal-engineer", "solution-architect", "tech-lead"].includes(r.id));
     expect(others.length).toBe(5);
     for (const r of others) expect(r.teamSize).toBeUndefined();
+  });
+
+  it("content-team-size-up-to-label", () => {
+    const l = (id: string) => {
+      const r = role(id);
+      return teamSizeLabel(r.teamSize, r.teamSizeUpTo ? content.labels.upTo : undefined);
+    };
+    expect(content.labels.upTo).toBe("up to");
+    expect(l("principal-engineer")).toBe("up to 12");
+    expect(l("solution-architect")).toBe("up to 6");
+    expect(l("tech-lead")).toBe("5");
+    expect(role("tech-lead").teamSizeUpTo).toBeUndefined();
   });
 
   it("content-hyperpanda-todo-end", () => {

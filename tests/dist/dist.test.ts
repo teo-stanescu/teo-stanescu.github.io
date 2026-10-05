@@ -70,7 +70,10 @@ describe("dist", () => {
     expect(cards.length).toBe(roles.length);
     roles.forEach((r, i) => {
       const text = decode(cards[i]!.replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ");
-      if (r.teamSize) expect(text).toContain(`${content.labels.tTeam} ${r.teamSize}`);
+      if (r.teamSize) {
+        const n = r.teamSizeUpTo ? `${content.labels.upTo} ${r.teamSize}` : `${r.teamSize}`;
+        expect(text).toContain(`${content.labels.tTeam} ${n}`);
+      }
       if (typeof r.focus === "string") expect(text).toContain(`${content.labels.tFocus} ${r.focus}`);
     });
   });

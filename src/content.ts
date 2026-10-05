@@ -131,6 +131,7 @@ export const content: Content = {
           org: "FintechOS, Bucharest, Romania",
           dates: { start: { year: 2023, month: 2 }, end: { year: 2024, month: 3 } },
           teamSize: 6,
+          teamSizeUpTo: true,
           focus: "Solution architecture and customer partnership",
           context:
             "Solution architect for around five of FintechOS's largest customers. After leading a team of developers, my role shifted from hands-on coding and code reviews towards end-to-end solutioning of customer problems, architecture and strategic positioning, while keeping the relationship with the customer healthy.",
@@ -154,6 +155,7 @@ export const content: Content = {
           org: "FintechOS, Bucharest, Romania",
           dates: { start: { year: 2024, month: 3 }, end: "present" },
           teamSize: 12,
+          teamSizeUpTo: true,
           focus: "Platform upgrades and architecture",
           context:
             "Currently working for FintechOS's largest customer, while contributing to several company-wide initiatives beyond the customer engagement.",
@@ -208,6 +210,7 @@ export const content: Content = {
     tRole: "Role",
     tYears: "Years",
     tTeam: "Team led",
+    upTo: "up to",
     tFocus: "Focus",
     current: "Current",
     inView: "In view",

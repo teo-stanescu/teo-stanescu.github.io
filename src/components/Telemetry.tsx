@@ -18,7 +18,7 @@ export function Telemetry(props: { content: Content }) {
     ["stage", labels.tStage, stage.telemetryName],
     ["role", labels.tRole, role.title],
     ["years", labels.tYears, formatRange(role.dates, labels.present)],
-    ["team", labels.tTeam, teamSizeLabel(role.teamSize)],
+    ["team", labels.tTeam, teamSizeLabel(role.teamSize, role.teamSizeUpTo ? labels.upTo : undefined)],
     ["focus", labels.tFocus, present(role.focus) ? role.focus : null],
   ];
   return (

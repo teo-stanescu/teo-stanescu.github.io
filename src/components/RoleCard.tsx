@@ -8,7 +8,7 @@ export function RoleCard(props: { role: Role; stageName: string; labels: Labels 
   if (present(role.decision)) parts.push([labels.decision, role.decision]);
   if (present(role.outcome)) parts.push([labels.outcome, role.outcome]);
   const bullets = role.details.filter(present);
-  const team = teamSizeLabel(role.teamSize);
+  const team = teamSizeLabel(role.teamSize, role.teamSizeUpTo ? labels.upTo : undefined);
   const meta: [string, string][] = [];
   if (team) meta.push([labels.tTeam, team]);
   if (present(role.focus)) meta.push([labels.tFocus, role.focus]);
@@ -19,7 +19,7 @@ export function RoleCard(props: { role: Role; stageName: string; labels: Labels 
       data-stage={props.stageName}
       data-role={role.title}
       data-years={formatRange(role.dates, labels.present)}
-      data-team={teamSizeLabel(role.teamSize) ?? ""}
+      data-team={team ?? ""}
       data-focus={present(role.focus) ? role.focus : ""}
     >
       <header className="card-header">

@@ -28,7 +28,7 @@ it("render-telemetry-idle-current", () => {
   expect(dd(t, "stage")).toBe("3 - Orbit");
   expect(dd(t, "role")).toBe("Principal Engineer");
   expect(dd(t, "years")).toMatch(/Present$/);
-  expect(dd(t, "team")).toBe("12");
+  expect(dd(t, "team")).toBe("up to 12");
   expect(dd(t, "focus")).toBe(currentRole(content).role.focus);
   expect(t).not.toContain("aria-live");
   expect(t).not.toMatch(/<(a|button|input|select|textarea)\b|tabindex/);

@@ -72,7 +72,7 @@ function checkProbe(p: Probe) {
   expect(p.stage).toBe(p.attrStage);
   expect(p.years).toBe(p.attrYears);
   expect(p.state).toBe("In view");
-  const team: Record<string, string> = { "Principal Engineer": "12", "Solution Architect": "6", "Tech Lead": "5" };
+  const team: Record<string, string> = { "Principal Engineer": "up to 12", "Solution Architect": "up to 6", "Tech Lead": "5" };
   if (team[p.title]) {
     expect(p.team).toBe(team[p.title]);
     expect(p.teamGlyph).toBe(false);

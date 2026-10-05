@@ -28,6 +28,8 @@ describe("model", () => {
   it("model-team-size-label", () => {
     expect(teamSizeLabel(12)).toBe("12");
     expect(teamSizeLabel(undefined)).toBeNull();
+    expect(teamSizeLabel(12, "up to")).toBe("up to 12");
+    expect(teamSizeLabel(undefined, "up to")).toBeNull();
   });
 
   it("model-format-year-month-bounds", () => {

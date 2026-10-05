@@ -16,12 +16,14 @@ describe("repo scaffold", () => {
       ".worktrees/",
       "docs/guild/",
       ".claude/",
-      "node_modules/",
-      "dist/",
-      "node_modules",
-      "dist",
+      "/node_modules",
+      "/dist",
     ]) {
       expect(lines).toContain(entry);
+    }
+    // Anchored at the root, so tests/dist is not ignored. No trailing slash, so symlinks match.
+    for (const entry of ["node_modules/", "dist/", "node_modules", "dist"]) {
+      expect(lines).not.toContain(entry);
     }
   });
 

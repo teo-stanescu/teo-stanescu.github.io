@@ -53,13 +53,11 @@ function attributeValues(): string {
 
 describe("dist", () => {
   it("dist-all-content-in-html", () => {
-    const { seo: _seo, person, ...rest } = content;
-    // person.summary feeds the meta description and JSON-LD only. The hero does not render it.
-    const { summary: _summary, ...personRest } = person;
+    const { seo: _seo, ...rest } = content;
     // The CV label shows only when public/cv.pdf exists (dist-cv-link-matches-file).
     const { cv: cvLabel, ...labels } = rest.labels;
     const strings: string[] = [];
-    collect({ ...rest, labels, person: personRest }, strings);
+    collect({ ...rest, labels }, strings);
     if (existsSync("public/cv.pdf")) strings.push(cvLabel);
     expect(strings.length).toBeGreaterThan(20);
     const text = bodyText() + "\n" + attributeValues();

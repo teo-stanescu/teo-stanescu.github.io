@@ -177,6 +177,38 @@ test("e2e-bar-covers-no-text", async ({ page }) => {
   }
 });
 
+test("e2e-bar-fits-every-role-360", async ({ page }) => {
+  for (const w of [360, 375]) {
+    await openAt(page, w, 700);
+    const ids = await page.evaluate(() => [...document.querySelectorAll("article.card")].map((e) => e.id));
+    expect(ids.length).toBeGreaterThanOrEqual(8);
+    for (const id of ids) {
+      await page.goto(`/#${id}`);
+      await page.waitForTimeout(50);
+      const m = await page.evaluate(() => {
+        const bar = document.querySelector(".telemetry")!.getBoundingClientRect();
+        const dl = document.querySelector(".telemetry dl")!.getBoundingClientRect();
+        const lines = [...document.querySelectorAll<HTMLElement>(".telemetry dt, .telemetry dd")]
+          .filter((el) => !el.closest(".visually-hidden") && el.getBoundingClientRect().width > 2 && getComputedStyle(el).display !== "none")
+          .filter((el) => !(el.tagName === "DT" && el.getBoundingClientRect().width <= 2))
+          .map((el) => {
+            const cs = getComputedStyle(el);
+            return {
+              name: el.tagName + ":" + (el.textContent ?? "").slice(0, 24),
+              rows: Math.round(el.getBoundingClientRect().height / parseFloat(cs.lineHeight)),
+            };
+          });
+        return { barH: bar.height, barBottom: bar.bottom, dlBottom: dl.bottom, lines, sw: document.documentElement.scrollWidth };
+      });
+      expect(m.barH, `${id} @${w}`).toBeLessThanOrEqual(56);
+      expect(m.dlBottom, `${id} @${w} content inside bar`).toBeLessThanOrEqual(m.barBottom + 0.5);
+      for (const l of m.lines) expect(l.rows, `${id} @${w} ${l.name}`).toBe(1);
+      expect(m.sw).toBeLessThanOrEqual(w);
+      expect(await intersectsTelemetry(page, id), `${id} @${w} overlap`).toEqual([]);
+    }
+  }
+});
+
 test("e2e-cls-under-0-1", async ({ page }) => {
   await page.addInitScript(() => {
     (window as unknown as { __cls: number }).__cls = 0;

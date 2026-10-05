@@ -51,6 +51,51 @@ test.describe("without JavaScript", () => {
     }
   });
 
+  test("e2e-nojs-bar-label-no-break", async ({ page }) => {
+    for (const w of [360, 375]) {
+      await page.setViewportSize({ width: w, height: 800 });
+      await page.goto("/");
+      const rows = await page.evaluate(() =>
+        [...document.querySelectorAll<HTMLElement>(".telemetry dt, .telemetry dd")]
+          .filter((el) => el.getBoundingClientRect().width > 2)
+          .map((el) => {
+            const cs = getComputedStyle(el);
+            return {
+              text: (el.textContent ?? "").slice(0, 24),
+              rows: Math.round(el.getBoundingClientRect().height / parseFloat(cs.lineHeight)),
+              display: cs.display,
+            };
+          }),
+      );
+      expect(rows.length).toBeGreaterThan(0);
+      // A label is one line. A value may wrap between words, never inside one.
+      for (const r of rows.filter((x) => /^(Stage|Role|Years|Team led|Focus)/.test(x.text) && x.text.length < 10)) {
+        expect(r.rows, `${w} ${r.text}`).toBe(1);
+      }
+      const split = await page.evaluate(() => {
+        const bad: string[] = [];
+        for (const el of document.querySelectorAll<HTMLElement>(".telemetry dt, .telemetry dd")) {
+          const words = (el.textContent ?? "").split(/\s+/).filter(Boolean);
+          const node = el.firstChild;
+          if (!node || node.nodeType !== 3) continue;
+          const text = node.textContent ?? "";
+          let i = 0;
+          for (const w of words) {
+            const at = text.indexOf(w, i);
+            if (at < 0) continue;
+            const range = document.createRange();
+            range.setStart(node, at);
+            range.setEnd(node, at + w.length);
+            if (range.getClientRects().length > 1) bad.push(w);
+            i = at + w.length;
+          }
+        }
+        return bad;
+      });
+      expect(split, `words broken at ${w}`).toEqual([]);
+    }
+  });
+
   test("e2e-nojs-panel-aligned-1280", async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 800 });
     await page.goto("/");

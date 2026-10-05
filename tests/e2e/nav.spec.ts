@@ -294,3 +294,28 @@ test("e2e-startup-error-static", async ({ page }) => {
   const n = await links.count();
   for (let i = 0; i < n; i++) await expect(links.nth(i)).toBeVisible();
 });
+
+// The active stage is the stage that holds the viewport midline, not the stage of the telemetry card.
+test("e2e-nav-stage-follows-midline", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await ready(page);
+  const height = await page.evaluate(() => document.documentElement.scrollHeight);
+  const bad: string[] = [];
+  for (let y = 0; y <= height; y += 150) {
+    await page.evaluate((y) => window.scrollTo({ top: y, behavior: "instant" }), y);
+    await frames(page);
+    const r = await page.evaluate(() => {
+      const mid = window.innerHeight / 2;
+      const atEnd = window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 2;
+      const secs = [...document.querySelectorAll<HTMLElement>("section.stage, #skills, #contact")];
+      let want = "#top";
+      for (const s of secs) if (s.getBoundingClientRect().top <= mid) want = `#${s.id}`;
+      if (window.scrollY <= 0) want = "#top";
+      if (atEnd) want = "#contact";
+      const loc = document.querySelector('#nav a[aria-current="location"]');
+      return { want, got: loc?.getAttribute("href") ?? null, y: window.scrollY };
+    });
+    if (r.want !== r.got) bad.push(`scroll ${r.y}: want ${r.want}, got ${r.got}`);
+  }
+  expect(bad).toEqual([]);
+});

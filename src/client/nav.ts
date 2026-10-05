@@ -74,6 +74,7 @@ export function startNav(): void {
   const links = [...nav.querySelectorAll<HTMLAnchorElement>("a[href^='#']")];
   const link = (href: string) => links.find((a) => a.getAttribute("href") === href) ?? null;
   const cards = [...document.querySelectorAll<HTMLElement>("article.card")];
+  const stages = [...document.querySelectorAll<HTMLElement>("section.stage")];
   const skills = document.getElementById("skills");
   const contact = document.getElementById("contact");
   const tail = [skills, contact].filter((e): e is HTMLElement => e !== null);
@@ -103,14 +104,11 @@ export function startNav(): void {
     } else if (past) {
       stage = link(`#${past.id}`);
     } else {
+      // The stage is the one that holds the midline. The role is the card of the telemetry, if it sits in that stage.
+      const section = atMidline(stages);
+      stage = section ? link(`#${section.id}`) : link("#top");
       const card = shownCard() ?? atMidline(cards);
-      const section = card?.closest("section.stage");
-      if (card && section) {
-        stage = link(`#${section.id}`);
-        role = link(`#${card.id}-heading`);
-      } else {
-        stage = link("#top");
-      }
+      if (card && section && card.closest("section.stage") === section) role = link(`#${card.id}-heading`);
     }
     stage?.setAttribute("aria-current", "location");
     role?.setAttribute("aria-current", "true");

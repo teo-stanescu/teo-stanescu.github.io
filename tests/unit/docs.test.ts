@@ -2,7 +2,14 @@ import { describe, it, expect } from "vitest";
 import { readFileSync, readdirSync } from "node:fs";
 
 const read = (p: string) => readFileSync(p, "utf8");
-const ADRS = ["0001-stack.md", "0002-animation.md", "0003-content-model.md"];
+const ADRS = [
+  "0001-stack.md",
+  "0002-animation.md",
+  "0003-content-model.md",
+  "0004-page-search.md",
+  "0005-navigation-and-layout.md",
+  "0006-order-and-motifs.md",
+];
 
 describe("docs", () => {
   it("repo-adr-files", () => {
@@ -19,6 +26,32 @@ describe("docs", () => {
   it("repo-adr-no-jargon", () => {
     const re = /guild|ICM|\bAC-\d|\bG[12]\b|\bU-\d|FMEA row|stage 0[0-9]|lead|red team/i;
     for (const f of ADRS) expect(read(`docs/adr/${f}`)).not.toMatch(re);
+  });
+
+  it("repo-adr-0002-order-note", () => {
+    const text = read("docs/adr/0002-animation.md");
+    const line = text.split("\n").find((l) => l.startsWith("Update (v1.1)"));
+    expect(line, "ADR 0002 lacks an Update (v1.1) line").toBeDefined();
+    expect(line).toMatch(/Stage 3/);
+    expect(line).toMatch(/Stage 0/);
+    expect(line).toMatch(/plane/i);
+    expect(text).toMatch(/^## Status\s+Accepted\b/m);
+    expect(read("docs/adr/0006-order-and-motifs.md")).toMatch(/replaces the order rule of ADR 0002/);
+  });
+
+  it("repo-readme-search-and-nav", () => {
+    const text = read("README.md");
+    expect(text).toMatch(/"\/" key/);
+    expect(text).toMatch(/left nav list/i);
+    expect(text).toMatch(/Contents/);
+    for (const f of ["0004-page-search.md", "0005-navigation-and-layout.md", "0006-order-and-motifs.md"]) {
+      expect(text).toContain(`docs/adr/${f}`);
+    }
+  });
+
+  it("repo-playwright-fresh-server", () => {
+    // A preview server left from another worktree must never serve old code to the tests.
+    expect(read("playwright.config.ts")).toMatch(/reuseExistingServer:\s*false/);
   });
 
   it("repo-readme-sections", () => {

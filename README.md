@@ -2,9 +2,13 @@
 
 A single static page that presents a career as a mission log. Each role is a card. A trajectory line follows the scroll position, and a telemetry panel shows the stage, role, years, team size and focus of the card in view.
 
-- Built with Vite, React 19 and TypeScript. React runs at build time only. The browser gets prerendered HTML, one stylesheet and a script of about 1.5 KB gzip.
+- Built with Vite, React 19 and TypeScript. React runs at build time only. The browser gets prerendered HTML, one stylesheet and a script of a few KB gzip (the budget is 20 KB).
 - The page is complete with JavaScript off and with reduced motion.
 - All CV text lives in one typed file, `src/content.ts`.
+- Page search: press the "/" key to search all the text on the page. A result list and in-place highlights show the matches, with Next and Previous. Search needs JavaScript. It never sends the query anywhere.
+- A left nav list with a link to each stage and role. Below 1280 px the same list opens from a Contents button.
+- Light aerospace motifs: an air traffic control map in the background and a plane that follows the tip of the trajectory line. Both stay still under reduced motion.
+- Stages and roles run newest first, from Stage 3 to Stage 0.
 - Hosted on GitHub Pages at <https://teo-stanescu.github.io/>.
 
 The design decisions are in [`docs/adr/`](docs/adr/):
@@ -12,6 +16,9 @@ The design decisions are in [`docs/adr/`](docs/adr/):
 - [0001 Stack](docs/adr/0001-stack.md)
 - [0002 Animation](docs/adr/0002-animation.md)
 - [0003 Content model](docs/adr/0003-content-model.md)
+- [0004 Page search](docs/adr/0004-page-search.md)
+- [0005 Navigation and layout](docs/adr/0005-navigation-and-layout.md)
+- [0006 Order and motifs](docs/adr/0006-order-and-motifs.md)
 
 ## Setup
 
@@ -78,6 +85,17 @@ The site URL and GitHub URL are constants in `src/config.ts`. The social preview
 | `npm run hooks:install` | Points Git at `.githooks/`. |
 
 `node scripts/make-og.mjs` regenerates the social preview image. It has no npm script.
+
+## Search keys
+
+| Key | Action |
+|---|---|
+| `/` | Focus the search input. It does nothing while focus is in a field. |
+| Arrow Down, Arrow Up | Move through the result list. |
+| Enter | Go to the chosen result. With no result chosen, go to the next match. Shift+Enter goes to the previous match. |
+| Escape | Close the result list. Press it again to clear the search. |
+
+The Next and Previous buttons move between matches. The search needs at least 2 characters and ignores case and accents.
 
 ## Checks
 

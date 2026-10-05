@@ -33,6 +33,8 @@ Options:
 6. **One element, two layouts.** The panel and the sticky bar are the same element. Only CSS changes, at 768 px. `scroll-padding-top` keeps focused controls and link targets clear of the bar.
 7. **No live region.** The panel has no `aria-live`. An announcement on each scroll is noise for a screen reader user, and the cards hold the same facts in reading order.
 
+Update (v1.1): Stages now run from Stage 3 to Stage 0 and roles run newest first, so the page reads back in time. The trajectory still grows with scroll. A plane follows the tip of the line and stays at the start under reduced motion. See [0006](0006-order-and-motifs.md). One scroll scheduler now serves the line, the telemetry and the nav (see [0005](0005-navigation-and-layout.md)).
+
 ## Consequences
 Positive:
 

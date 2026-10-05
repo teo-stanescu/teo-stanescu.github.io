@@ -28,8 +28,8 @@ Options:
    ```
    The marker is a frozen object whose `toString`, `valueOf`, `toJSON` and `Symbol.toPrimitive` all throw. Any attempt to turn it into text (a template literal, `String()`, `join()`, an attribute, JSON) fails the build with the note in the error message.
 4. Components show a `Text` field only after `present()`. A marker is therefore omitted from the output: no text, no empty element. React also does not accept a plain object as a child, so putting a marker straight into JSX is a type error.
-5. Dates are year and month values, not text. Code formats them and computes durations at build time. A current role has the end value `"present"`. An unconfirmed end date is a marker, and the page shows the start date only.
-6. Team size is a number only where the owner gave one. Other roles show a dash.
+5. Dates are year and month values, not text. Code only formats them for display. A current role has the end value `"present"`. An unconfirmed end date is a marker, and the page shows the start date only.
+6. Team size is a number only where the owner gave one. Other roles show a dash. Where the owner wrote "up to", the role carries a flag and the label adds the words "up to" from the labels in `content.ts`.
 7. Telemetry values go into `data-*` attributes in the HTML. The browser script never imports `content.ts`, so source notes cannot reach the browser bundle.
 8. Automated checks:
    - A lint script fails on letters in JSX text in a component file, and on letters in a prose attribute (`alt`, `title`, `aria-label`).
@@ -48,7 +48,6 @@ Negative:
 
 - Labels and CV text sit in the same file. This costs some separation, in exchange for one place to edit.
 - Throwing on coercion makes a mistake fail loudly at build time. That is intended, but a new contributor may find the error surprising at first.
-- Durations refresh only when the site builds. Between builds, a duration can be a few weeks old.
 
 ## Alternatives considered
 Markdown or JSON with a loader, and a CMS, both in the table above. A plain `undefined` for a missing fact was also considered. It cannot carry a note for the owner, so it loses the main benefit of the marker.

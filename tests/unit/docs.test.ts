@@ -27,4 +27,13 @@ describe("docs", () => {
       expect(text, `README lacks ## ${h}`).toMatch(new RegExp(`^## ${h}\\s*$`, "m"));
     }
   });
+
+  it("docs-adr-matches-code", () => {
+    const adr = read("docs/adr/0003-content-model.md");
+    // No code computes a duration, so the ADR must not claim one.
+    expect(adr).not.toMatch(/duration/i);
+    expect(read("src/model.ts")).not.toMatch(/duration/i);
+    expect(adr).toContain("Code only formats them");
+    expect(adr).toMatch(/"up to"/);
+  });
 });

@@ -244,6 +244,13 @@ a:hover {
   }
 }
 
+/* Without JavaScript the nav is compact below 1280 px: the nested role lists are hidden. A failed script keeps the full list. */
+@media (max-width: 1279.98px) {
+  html:not(.js):not(.script-failed) .nav li > ul {
+    display: none;
+  }
+}
+
 /* Only the active stage shows its roles. Needs nav-ready, so a failed script leaves every role visible. */
 html.nav-ready .nav li > ul {
   height: 0;

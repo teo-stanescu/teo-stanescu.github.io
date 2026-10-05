@@ -100,18 +100,32 @@ test.describe("without JavaScript", () => {
     for (const w of [360, 1280]) {
       await page.setViewportSize({ width: w, height: 800 });
       await page.goto("/");
-      const links = page.locator("#nav a");
+      // Below 1280 px the nested role lists are hidden (compact list). From 1280 px every link shows.
+      const links = page.locator(w < 1280 ? "#nav > ul > li > a" : "#nav a");
       const n = await links.count();
-      expect(n).toBeGreaterThanOrEqual(15);
+      expect(n).toBeGreaterThanOrEqual(w < 1280 ? 7 : 15);
       for (let i = 0; i < n; i++) await expect(links.nth(i), `${w} link ${i}`).toBeVisible();
       await page.locator('#nav a[href="#stage-1"]').click();
       expect(new URL(page.url()).hash).toBe("#stage-1");
       const top = await page.evaluate(() => document.getElementById("stage-1")!.getBoundingClientRect().top);
       expect(top).toBeLessThan(400);
+      if (w < 1280) continue;
       await page.goto("/");
       await page.locator("#nav a[href$='-heading']").first().click();
       expect(new URL(page.url()).hash).toMatch(/-heading$/);
     }
+  });
+
+  test("e2e-nojs-nav-compact-375", async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 800 });
+    await page.goto("/");
+    // Role links are hidden. Stage links, Top, Skills and Contact stay.
+    await expect(page.locator("#nav li > ul a").first()).toBeHidden();
+    await expect(page.locator("#nav > ul > li > a")).toHaveCount(7);
+    const nav = (await page.locator("#nav").boundingBox())!;
+    const h1 = (await page.locator("h1").boundingBox())!;
+    expect(nav.height).toBeLessThanOrEqual(280);
+    expect(h1.y).toBeLessThanOrEqual(400);
   });
 
   test("e2e-nojs-panel-aligned-1280", async ({ page }) => {

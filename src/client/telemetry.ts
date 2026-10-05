@@ -4,6 +4,12 @@ import { atMidline, onFrame } from "./scroll";
 const KEYS = ["stage", "role", "years", "team", "focus"] as const;
 type Key = (typeof KEYS)[number];
 
+// The card the panel shows now. Null while the panel shows the idle (current) role.
+let shown: HTMLElement | null = null;
+export function shownCard(): HTMLElement | null {
+  return shown;
+}
+
 export function startTelemetry(): void {
   const panel = document.querySelector<HTMLElement>(".telemetry");
   if (!panel) throw new Error("telemetry panel missing");
@@ -39,6 +45,7 @@ export function startTelemetry(): void {
   };
 
   const setActive = (card: HTMLElement) => {
+    shown = card;
     const d = card.dataset;
     write("stage", d.stage ?? "");
     write("role", d.role ?? "");
@@ -49,6 +56,7 @@ export function startTelemetry(): void {
   };
 
   const setIdle = () => {
+    shown = null;
     for (const [k, nodes] of idleNodes) {
       const el = field(k);
       if (!el) continue;

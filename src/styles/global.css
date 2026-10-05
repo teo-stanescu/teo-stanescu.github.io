@@ -44,6 +44,7 @@
   --lane: 24px;
   --bar-h: 3rem;
   --panel-w: 0px;
+  --bar-slot: 8.5rem;
   --clear: calc(var(--bar-h) + var(--s-4));
 }
 
@@ -228,9 +229,109 @@ a:hover {
 
 /* The popover state hides the list below 1280 px. Only a class that the script sets after a good start does this, never html.js alone. */
 @media (max-width: 1279.98px) {
-  html.nav-ready .nav {
+  html.nav-ready .nav:not(:popover-open) {
     display: none;
   }
+}
+
+/* Only the active stage shows its roles. Needs nav-ready, so a failed script leaves every role visible. */
+html.nav-ready .nav li > ul {
+  height: 0;
+  overflow: hidden;
+  visibility: hidden;
+}
+
+html.nav-ready .nav li:has(> a[aria-current="location"]) > ul {
+  height: auto;
+  overflow: visible;
+  visibility: visible;
+}
+
+.nav a[aria-current="true"] {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.nav a:focus-visible {
+  outline-offset: -3px;
+}
+
+/* Contents popover below 1280 px: the same list, as a panel under the bar. */
+html.nav-ready .nav[popover] {
+  position: fixed;
+  inset: var(--bar-h) auto auto 0;
+  margin: 0;
+  width: min(22rem, 100vw);
+  height: auto;
+  max-height: calc(100dvh - var(--bar-h));
+  overflow-y: auto;
+  padding: var(--s-3) var(--s-4);
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--rule);
+  border-top-width: 0;
+}
+
+@media (max-width: 767.98px) {
+  html.nav-ready .nav[popover] {
+    width: 100vw;
+    height: calc(100dvh - var(--bar-h));
+    border-width: 0;
+  }
+}
+
+/* The Contents button. Hidden when the rail shows. */
+.contents-btn {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 var(--s-3);
+  font: inherit;
+  font-family: var(--mono);
+  font-size: var(--fs-label);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.contents-btn:hover {
+  border-color: var(--accent);
+}
+
+@media (min-width: 768px) {
+  html.js .topbar {
+    display: flex;
+    align-items: center;
+    gap: var(--s-2);
+    padding-inline: var(--s-4);
+  }
+}
+
+/* Below 768 px the telemetry is the bar. The slot sits over its right end. The padding reserves room from the first frame. */
+@media (max-width: 767.98px) {
+  html.js .topbar {
+    display: flex;
+    align-items: center;
+    gap: var(--s-2);
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: var(--bar-slot);
+    height: var(--bar-h);
+    padding-inline: var(--s-2);
+    z-index: 16;
+    background: var(--surface);
+    border-bottom: 1px solid var(--rule);
+  }
+}
+
+h1,
+h2,
+h3 {
+  scroll-margin-top: var(--clear);
 }
 
 /* Below 1280 px the plain list keeps clear of the telemetry panel. */
@@ -744,7 +845,7 @@ html.js .telemetry {
     margin: 0;
     top: 0;
     left: 0;
-    right: 0;
+    right: var(--bar-slot);
     height: var(--bar-h);
     padding: 0 var(--s-4);
     border-width: 0 0 1px;

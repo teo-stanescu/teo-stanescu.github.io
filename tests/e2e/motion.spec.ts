@@ -64,6 +64,13 @@ test.describe("reduced motion", () => {
     expect(await page.evaluate(() => document.getAnimations().length)).toBe(0);
     expect((await drawn(page)).offset).toBe(0);
 
+    // A nav click adds no transition or animation.
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.waitForSelector("html.nav-ready");
+    await page.locator('#nav a[href="#top"]').click();
+    expect(await page.evaluate(() => window.scrollY)).toBeLessThan(5);
+    expect(await page.evaluate(() => document.getAnimations().length)).toBe(0);
+
     const bad = await page.evaluate(() => {
       const zero = (v: string) => v.split(",").every((s) => s.trim() === "0s");
       const out: string[] = [];

@@ -111,3 +111,22 @@ it("render-hyperpanda-date", () => {
   const m = /<article [^>]*id="hyperpanda"[\s\S]*?<\/article>/.exec(out)!;
   expect(/<p class="card-dates">([^<]*)<\/p>/.exec(m[0])?.[1]).toBe("Oct 2017");
 });
+
+it("render-summary-names-role", () => {
+  const out = cardHtml(base);
+  expect(out).toMatch(
+    /<summary>Details<span class="visually-hidden"> — Title<\/span><\/summary>/,
+  );
+  const names = [...pageHtml().matchAll(/<summary>([\s\S]*?)<\/summary>/g)].map((m) =>
+    m[1]!.replace(/<[^>]*>/g, ""),
+  );
+  expect(names.length).toBeGreaterThan(0);
+  expect(new Set(names).size).toBe(names.length);
+});
+
+it("render-stage-label-after-heading", () => {
+  const s = content.stages[0]!;
+  expect(pageHtml()).toContain(
+    `<h2>${s.heading}</h2><p class="stage-label">${s.label}</p>`,
+  );
+});

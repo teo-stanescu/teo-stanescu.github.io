@@ -4,7 +4,7 @@ import { App } from "../../src/components/App";
 import { Telemetry } from "../../src/components/Telemetry";
 import { content } from "../../src/content";
 import { GITHUB_URL } from "../../src/config";
-import { todo, currentRole, type Content } from "../../src/model";
+import { todo, present, currentRole, type Content } from "../../src/model";
 
 const page = (c: Content = content) => renderToStaticMarkup(<App content={c} hasCv={false} base="/" />);
 const tags = (html: string, re: string) =>
@@ -29,6 +29,7 @@ it("render-telemetry-idle-current", () => {
   expect(dd(t, "role")).toBe("Principal Engineer");
   expect(dd(t, "years")).toMatch(/Present$/);
   expect(dd(t, "team")).toBe("12");
+  expect(dd(t, "focus")).toBe(currentRole(content).role.focus);
   expect(t).not.toContain("aria-live");
   expect(t).not.toMatch(/<(a|button|input|select|textarea)\b|tabindex/);
 });
@@ -50,7 +51,9 @@ it("render-telemetry-dash", () => {
   expect(t).toContain('data-idle="Current"');
   expect(t).toContain('data-active="In view"');
   expect(t).toContain('data-dash="not stated"');
-  expect(renderToStaticMarkup(<Telemetry content={content} />)).toContain("telemetry");
+  expect(t).toContain(`data-glyph="${content.labels.dash}"`);
+  expect(t).toContain(`<span aria-hidden="true">${content.labels.dash}</span>`);
+  expect(renderToStaticMarkup(<Telemetry content={content} />)).toBe(aside(page()));
 });
 
 it("render-skills-groups", () => {
@@ -63,11 +66,9 @@ it("render-skills-groups", () => {
     "Also",
     "Languages",
   ]);
-  const lists = tags(s, "ul");
+  const uls = s.split("<ul").slice(1).map((u) => u.split("</ul>")[0]!);
   content.skills.forEach((g, i) => {
-    expect(tags(lists[i]!.text.length ? s.split("<ul")[i + 1]!.split("</ul>")[0]! + "</ul>" : "", "li").map((l) => l.text)).toEqual(
-      g.items,
-    );
+    expect(tags(uls[i]!, "li").map((l) => l.text)).toEqual(g.items.filter(present));
   });
 });
 

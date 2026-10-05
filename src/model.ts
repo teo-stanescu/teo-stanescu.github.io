@@ -79,6 +79,7 @@ export interface Labels {
   readonly current: string;
   readonly inView: string;
   readonly notStated: string;
+  readonly dash: string;
   readonly present: string;
 }
 

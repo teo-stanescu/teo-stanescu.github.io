@@ -31,7 +31,7 @@ it("prerender-build-from-other-cwd", () => {
       ["build", resolve("."), "--outDir", join(out, "dist"), "--emptyOutDir"],
       { cwd: out, stdio: "pipe" },
     );
-    expect(readFileSync(join(out, "dist", "index.html"), "utf8")).toContain("<main id=\"main\">");
+    expect(readFileSync(join(out, "dist", "index.html"), "utf8")).toContain("<main id=\"main\"");
   } finally {
     rmSync(out, { recursive: true, force: true });
   }

@@ -31,7 +31,13 @@ export function RoleCard(props: { role: Role; stageName: string; labels: Labels 
       ))}
       {bullets.length > 0 ? (
         <details className="card-details">
-          <summary>{labels.details}</summary>
+          <summary>
+            {labels.details}
+            <span className="visually-hidden">
+              {" "}
+              {labels.dash} {role.title}
+            </span>
+          </summary>
           <ul>
             {bullets.map((b) => (
               <li key={b}>{b}</li>

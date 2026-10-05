@@ -8,12 +8,15 @@ test("e2e-hero-above-stage0", async ({ page }) => {
   // The first h2 is Stage 0 once the stage task lands. The #main landmark follows the hero.
   const boundary = page.locator("h2, #main").first();
   const boundaryTop = (await boundary.boundingBox())!.y;
+  const hasCv = existsSync("dist/cv.pdf");
+  const cv = page.getByRole("link", { name: "Download CV (PDF)", exact: true });
   const above = [
     h1,
     page.getByText("Principal Engineer", { exact: true }),
     page.getByText("Bucharest, Romania", { exact: true }),
     page.getByRole("link", { name: "GitHub", exact: true }),
     page.getByRole("link", { name: "Email", exact: true }),
+    ...(hasCv ? [cv] : []),
   ];
   for (const el of above) {
     const box = (await el.first().boundingBox())!;
@@ -27,6 +30,21 @@ test("e2e-hero-above-stage0", async ({ page }) => {
       expect(box.y + box.height).toBeLessThanOrEqual(h2Top + 1);
     }
   }
-  const cv = page.getByRole("link", { name: "Download CV (PDF)", exact: true });
-  await expect(cv).toHaveCount(existsSync("public/cv.pdf") ? 1 : 0);
+  await expect(cv).toHaveCount(hasCv ? 1 : 0);
+  // AC-03 order: the CV link comes first among the hero actions.
+  const names = await page
+    .locator("header.hero a:not(.skip-link)")
+    .evaluateAll((els) => els.map((e) => e.textContent));
+  expect(names).toEqual(hasCv ? ["Download CV (PDF)", "GitHub", "Email"] : ["GitHub", "Email"]);
+});
+
+test("e2e-skip-link-focuses-main", async ({ page }) => {
+  await page.goto("/");
+  const skip = page.locator("a.skip-link");
+  await skip.focus();
+  await expect(skip).toBeFocused();
+  await page.keyboard.press("Enter");
+  expect(await page.evaluate(() => document.activeElement?.id)).toBe("main");
+  await page.keyboard.press("Tab");
+  expect(await page.evaluate(() => document.activeElement?.tagName)).toBe("SUMMARY");
 });

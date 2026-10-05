@@ -212,6 +212,7 @@ export const content: Content = {
     current: "Current",
     inView: "In view",
     notStated: "not stated",
+    dash: "—",
     present: "Present",
   },
 };

@@ -13,7 +13,7 @@ export function App(props: PageProps) {
     <>
       <Hero content={props.content} hasCv={props.hasCv} base={props.base} />
       <Telemetry content={props.content} />
-      <main id="main">
+      <main id="main" tabIndex={-1}>
         <Trajectory />
         {props.content.stages.map((s) => (
           <Stage key={s.id} stage={s} labels={props.content.labels} />

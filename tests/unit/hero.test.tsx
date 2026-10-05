@@ -2,10 +2,10 @@ import { it, expect } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import { App } from "../../src/components/App";
 import { content } from "../../src/content";
-import { present } from "../../src/model";
+import { todo, type Todo } from "../../src/model";
 import { GITHUB_URL } from "../../src/config";
 
-const html = (o: { hasCv: boolean; base?: string; positioning?: string }) => {
+const html = (o: { hasCv: boolean; base?: string; positioning?: string | Todo }) => {
   const c = o.positioning
     ? { ...content, person: { ...content.person, positioning: o.positioning } }
     : content;
@@ -16,9 +16,13 @@ it("render-hero-fields", () => {
   const out = html({ hasCv: true });
   expect(out.match(/<h1[ >]/g)).toHaveLength(1);
   expect(out).toContain(`<h1>${content.person.name}</h1>`);
-  expect(out).toContain(content.person.title);
-  expect(out).toContain(content.person.location);
-  expect(out).toContain(content.labels.eyebrow);
+  const hero0 = /<header class="hero"[\s\S]*?<\/header>/.exec(out)![0];
+  expect(hero0).toContain(`<p class="hero-title">${content.person.title}</p>`);
+  expect(hero0).toContain(`<p class="hero-location">${content.person.location}</p>`);
+  expect(hero0).toContain(`<p class="eyebrow">${content.labels.eyebrow}</p>`);
+  const at = (needle: string) => hero0.indexOf(needle);
+  expect(at("<h1>")).toBeLessThan(at("hero-title"));
+  expect(at("hero-title")).toBeLessThan(at("hero-location"));
   expect(out).toMatch(/<a [^>]*href="#main"[^>]*>Skip to content<\/a>/);
   expect(out).toContain(`href="${GITHUB_URL}"`);
   expect(out).toContain('href="mailto:teo.st95@gmail.com"');
@@ -43,8 +47,7 @@ it("render-hero-cv-absent", () => {
 });
 
 it("render-hero-omits-todo-line", () => {
-  expect(present(content.person.positioning)).toBe(false);
-  const without = html({ hasCv: false });
+  const without = html({ hasCv: false, positioning: todo("x") });
   expect(without).not.toMatch(/<p[^>]*><\/p>/);
   expect(without).not.toContain("hero-line");
   const line = "One positioning sentence.";

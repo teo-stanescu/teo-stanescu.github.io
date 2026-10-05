@@ -1,11 +1,11 @@
 import type { Content } from "../model";
 import { currentRole, formatRange, present, teamSizeLabel } from "../model";
 
-function Value(props: { text: string | null; notStated: string }) {
+function Value(props: { text: string | null; notStated: string; dash: string }) {
   if (props.text) return <>{props.text}</>;
   return (
     <>
-      <span aria-hidden="true">—</span>
+      <span aria-hidden="true">{props.dash}</span>
       <span className="visually-hidden">{props.notStated}</span>
     </>
   );
@@ -28,6 +28,7 @@ export function Telemetry(props: { content: Content }) {
       data-idle={labels.current}
       data-active={labels.inView}
       data-dash={labels.notStated}
+      data-glyph={labels.dash}
     >
       <p className="telemetry-state" data-t="state">
         {labels.current}
@@ -37,7 +38,7 @@ export function Telemetry(props: { content: Content }) {
           <div className="telemetry-row" key={key}>
             <dt>{label}</dt>
             <dd data-t={key}>
-              <Value text={value} notStated={labels.notStated} />
+              <Value text={value} notStated={labels.notStated} dash={labels.dash} />
             </dd>
           </div>
         ))}

@@ -620,3 +620,13 @@ test("e2e-search-more-row", async ({ page }) => {
   await expect(options(page)).toHaveCount(8);
   await expect(page.locator(".search-pop")).toContainText(/^[\s\S]*and \d+ more/);
 });
+
+test("e2e-search-ignores-map-codes", async ({ page }) => {
+  await ready(page);
+  await type(page, "LROP");
+  await expect(page.getByRole("option")).toHaveCount(0);
+  await expect(page.locator(".search-count")).toContainText(/0|no/i);
+  expect(await expectedCount(page, "LROP")).toBe(0);
+  await type(page, "EDDW");
+  await expect(page.getByRole("option")).toHaveCount(0);
+});

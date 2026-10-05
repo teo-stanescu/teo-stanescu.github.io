@@ -6,6 +6,7 @@ import { Skills } from "./Skills";
 import { Footer } from "./Footer";
 import { Stage } from "./Stage";
 import { Trajectory } from "./Trajectory";
+import { Background } from "./Background";
 
 export type PageProps = { content: Content; hasCv: boolean; base: string };
 
@@ -13,6 +14,7 @@ export function App(props: PageProps) {
   const { labels } = props.content;
   return (
     <>
+      <Background />
       <a className="skip-link" href="#main">
         {labels.skip}
       </a>

@@ -1,12 +1,14 @@
 import type { Content } from "../model";
 import { present } from "../model";
 import { GITHUB_URL } from "../config";
+import { PlaneIcon } from "./PlaneIcon";
 
 export function Hero(props: { content: Content; hasCv: boolean; base: string }) {
   const { person, labels } = props.content;
   const line = person.positioning;
   return (
     <header className="hero" id="top">
+      <PlaneIcon size={24} className="hero-plane" />
       <p className="eyebrow">{labels.eyebrow}</p>
       <h1>{person.name}</h1>
       <p className="hero-title">{person.title}</p>

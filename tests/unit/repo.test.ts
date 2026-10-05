@@ -39,6 +39,28 @@ describe("repo scaffold", () => {
     expect(names.filter((n) => banned.test(n))).toEqual([]);
   });
 
+  it("repo-no-new-dependency", () => {
+    const pkg = JSON.parse(read("package.json"));
+    expect(pkg.dependencies).toBeUndefined();
+    // The v1.0.0 list.
+    expect(Object.keys(pkg.devDependencies).sort()).toEqual(
+      [
+        "@axe-core/playwright",
+        "@playwright/test",
+        "@types/node",
+        "@types/react",
+        "@types/react-dom",
+        "eslint",
+        "react",
+        "react-dom",
+        "typescript",
+        "typescript-eslint",
+        "vite",
+        "vitest",
+      ].sort(),
+    );
+  });
+
   it("repo-vite-base-root", () => {
     expect(read("vite.config.ts")).toContain('base: "/"');
     const hits: string[] = [];

@@ -171,7 +171,41 @@ describe("dist", () => {
       .filter((f) => [".woff", ".woff2", ".ttf", ".otf"].includes(extname(f)))
       .reduce((n, f) => n + statSync(f).size, 0);
     expect(fonts).toBeLessThanOrEqual(102400);
+    // The page loads only the JS that Vite emits for src/client/main.ts.
+    const loaded = [...html.matchAll(/<script[^>]*\ssrc="([^"]+)"/g)].map((m) => m[1]!.replace(/^\//, ""));
+    const emitted = files()
+      .filter((f) => extname(f) === ".js")
+      .map((f) => f.slice(DIST.length + 1));
+    expect(loaded.sort()).toEqual(emitted.sort());
+    expect(emitted.length).toBe(1);
   });
+
+  it("dist-index-html-gz-12kb", () => {
+    expect(gzipSync(readFileSync(join(DIST, "index.html"))).length).toBeLessThanOrEqual(12288);
+  });
+
+  it("dist-map-no-image-file", () => {
+    // The map is inline SVG. The only image file is the social card.
+    const images = files().filter((f) => /\.(svg|png|jpe?g|gif|webp|avif|ico)$/i.test(f));
+    expect(images).toEqual([join(DIST, "og-card.png")]);
+    expect(html).not.toMatch(/<img[^>]*map/i);
+    expect(readFileSync(join(DIST, "assets", readdirSync(join(DIST, "assets")).find((n) => n.endsWith(".css"))!), "utf8")).not.toMatch(
+      /url\([^)]*(map|atc)/i,
+    );
+  });
+
+  it.skipIf(!existsSync(".private/denylist.txt"))(
+    "dist-deny-list-map-nav",
+    () => {
+      const parts = [
+        ...(html.match(/<svg[^>]*class="atc-map"[\s\S]*?<\/svg>/g) ?? []),
+        ...(html.match(/<nav[\s\S]*?<\/nav>/g) ?? []),
+      ];
+      expect(parts.length).toBeGreaterThanOrEqual(2);
+      const entries = cp.loadList(".private/denylist.txt");
+      expect(cp.scanText(decode(parts.join("\n").replace(/></g, ">\n<")), entries)).toEqual([]);
+    },
+  );
 
   it("dist-no-external-url", () => {
     const allowed = [

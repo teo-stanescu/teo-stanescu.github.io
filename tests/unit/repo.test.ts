@@ -50,3 +50,37 @@ describe("repo scaffold", () => {
     expect(hits).toEqual([]);
   });
 });
+
+describe("repo ci", () => {
+  const wf = () => read(".github/workflows/deploy.yml");
+
+  it("repo-workflow-pages-shape", () => {
+    const w = wf();
+    expect(w).toMatch(/^on:/m);
+    expect(w).toMatch(/push:\s*\n\s+branches:\s*\[\s*main\s*\]/);
+    expect(w).toContain("workflow_dispatch");
+    expect(w).toMatch(/contents:\s*read/);
+    expect(w).toMatch(/pages:\s*write/);
+    expect(w).toMatch(/id-token:\s*write/);
+    expect(w).toMatch(/group:\s*pages/);
+    expect(w).toMatch(/cancel-in-progress:\s*false/);
+    expect(w).toContain("npm ci");
+    expect(w).toContain("npm run verify:ci");
+    expect(w).toContain("node scripts/check-commits.mjs --range");
+    expect(w).toContain("actions/upload-pages-artifact");
+    expect(w).toMatch(/path:\s*dist/);
+    expect(w).toContain("actions/deploy-pages");
+    expect(w).not.toContain("secrets.");
+    expect(w).not.toContain("pull_request_target");
+  });
+
+  it("repo-verify-ci-composition", () => {
+    const s = JSON.parse(read("package.json")).scripts;
+    for (const part of ["npm run lint", "npm run typecheck", "npm test", "npm run build"]) {
+      expect(s["verify:ci"]).toContain(part);
+    }
+    expect(s.lint).toContain("eslint");
+    expect(s.typecheck).toContain("tsc");
+    expect(s.build).toContain("vite build");
+  });
+});

@@ -22,8 +22,13 @@ function strings(v: unknown, out: string[] = []): string[] {
 }
 
 const UNLISTED = /\b(a|an)\s+(?:[\w'-]+\s+){0,3}(client|customer|bank|lender|insurer)s?\b/gi;
+// The brief phrase "a client implementation" names no client, so it is the one allowed exception.
+const BRIEF_PHRASE = /^\s+implementation\b/;
 const badDescriptors = (text: string): string[] =>
-  (text.match(UNLISTED) ?? []).filter((m) => !CLIENT_DESCRIPTORS.some((d) => d.includes(m)));
+  [...text.matchAll(UNLISTED)]
+    .filter((m) => m[0].toLowerCase() !== "a client" || !BRIEF_PHRASE.test(text.slice(m.index! + m[0].length)))
+    .map((m) => m[0])
+    .filter((m) => !CLIENT_DESCRIPTORS.some((d) => d.includes(m)));
 
 describe("content", () => {
   it("content-stage-membership", () => {
@@ -108,6 +113,9 @@ describe("content", () => {
     for (const s of strings(content)) expect(badDescriptors(s), s).toEqual([]);
     expect(badDescriptors("a German car lender")).toHaveLength(1);
     expect(badDescriptors("a banking client")).toEqual([]);
+    expect(badDescriptors("supporting delivery for a client implementation.")).toEqual([]);
+    expect(badDescriptors("supporting delivery for a client.")).toHaveLength(1);
+    expect(badDescriptors("a client implementation for a German bank")).toHaveLength(1);
   });
 
   it("content-positioning-is-todo", () => {

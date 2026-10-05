@@ -33,7 +33,7 @@ export const content: Content = {
           outcome: todo("the brief states no outcome of the degree or the Erasmus+ semester"),
           details: [
             "Bachelor of Science in Aerospace Engineering, Universitatea \"Politehnica\" Bucuresti.",
-            "Erasmus+ semester, Aerospace Engineering (\"Luft- und Raumfahrt Ingenieurwissenschaften\"), Hochschule Bremen.",
+            "Erasmus+ semester, Aerospace Engineering (\"Luft- und Raumfahrt Ingenieurwissenschaften\"), Hochschule Bremen, September 2016 - February 2017.",
           ],
         },
       ],
@@ -103,7 +103,7 @@ export const content: Content = {
           context: "Full stack development on the FintechOS platform in a fast-paced, high-performance environment.",
           decision: "Covered technical analysis, implementation and maintenance of new features.",
           outcome:
-            "Built a complete Internet Banking product from scratch in 9 months while also supporting delivery for an implementation.",
+            "Built a complete Internet Banking product from scratch in 9 months while also supporting delivery for a client implementation.",
           details: ["Technologies: JS, SQL Server, Azure, FintechOS Platform."],
         },
         {

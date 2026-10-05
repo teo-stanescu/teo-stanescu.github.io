@@ -36,4 +36,11 @@ describe("docs", () => {
     expect(adr).toContain("Code only formats them");
     expect(adr).toMatch(/"up to"/);
   });
+
+  it("docs-readme-hook-lists-local-tests", () => {
+    const hook = read(".githooks/pre-commit");
+    const readme = read("README.md");
+    expect(hook).toContain("test:local");
+    expect(readme).toMatch(/pre-commit hook runs[^.]*local tests/);
+  });
 });

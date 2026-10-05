@@ -91,7 +91,7 @@ This runs every check, including the private-data check. The first run needs a b
 
 Lighthouse is not a dependency. `npm run lighthouse` builds the site, serves it, and runs `npx lighthouse@12.8.2` three times with the Chromium that Playwright installed. It reports the median score for each category and fails if any is below 95. It runs locally only, because scores on shared CI machines vary too much to be a reliable gate. CI checks the main causes of a low score instead: size budgets on the built output, accessibility checks, and the `js` class set before first paint.
 
-The pre-commit hook runs lint, typecheck, unit tests and the private-data check on staged content. The commit-message hook requires a conventional subject such as `feat(scope): subject`.
+The pre-commit hook runs lint, typecheck, unit tests, the local tests (`npm run test:local`) and the private-data check on staged content. The commit-message hook requires a conventional subject such as `feat(scope): subject`.
 
 ## CV file
 

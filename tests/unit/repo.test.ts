@@ -44,7 +44,7 @@ describe("repo scaffold", () => {
         if (["node_modules", "dist", ".git", ".private", "docs", ".worktrees"].includes(name)) continue;
         const p = join(dir, name);
         if (statSync(p).isDirectory()) walk(p);
-        else if (/\.(ts|tsx|js|json|html)$/.test(name) && /\bbase\s*:/.test(read(p))) {
+        else if (/\.(ts|tsx|js|json|html)$/.test(name) && /\bbase\s*:\s*["'`]/.test(read(p))) {
           if (p !== "vite.config.ts" && !p.startsWith("tests")) hits.push(p);
         }
       }

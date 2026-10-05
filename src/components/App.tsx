@@ -1,7 +1,6 @@
 import type { Content } from "../model";
 
-// The Record type avoids a literal key named base. The repo scan test flags that key.
-export type PageProps = { content: Content; hasCv: boolean } & Record<"base", string>;
+export type PageProps = { content: Content; hasCv: boolean; base: string };
 
 // Empty frame. Tasks 7 to 9 fill it.
 export function App(props: PageProps) {

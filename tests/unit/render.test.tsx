@@ -1,11 +1,15 @@
 import { it, expect } from "vitest";
+import { readFileSync } from "node:fs";
 import { render } from "../../src/entry-server";
 import { content } from "../../src/content";
-import { SITE_URL, GITHUB_URL } from "../../src/config";
+import { SITE_URL, GITHUB_URL, FONT_PRELOAD_HREF } from "../../src/config";
 
 const opts = { hasCv: false, base: "/" };
 
-it("render-content-change", () => {
+// Scope: render() reads the content it is given and not a cached module copy. The JSON-LD
+// description carries person.summary, so a changed summary shows in the head.
+// The AC-02 proof (dist/index.html after a build) belongs to Task 13: dist-content-edit-roundtrip.
+it("render-reads-content-argument", () => {
   const oldText = content.person.summary;
   const newText = "A brand new summary sentence for the test.";
   const changed = { ...content, person: { ...content.person, summary: newText } };
@@ -45,4 +49,24 @@ it("render-jsonld-person", () => {
   expect(data.sameAs).toEqual([GITHUB_URL]);
   expect(m![1]).not.toContain(content.person.email);
   expect(m![1]).not.toContain("mailto");
+});
+
+it("render-head-one-icon-link", () => {
+  const { head } = render(opts);
+  expect(head.match(/rel="icon"/g)).toHaveLength(1);
+  expect(readFileSync("index.html", "utf8")).not.toContain('rel="icon"');
+});
+
+it("render-head-font-preload-constant", () => {
+  expect(render(opts).head).toContain(`<link rel="preload" href="${FONT_PRELOAD_HREF}"`);
+});
+
+it("render-jsonld-escapes-script-end", () => {
+  const evil = "x </script><script>alert(1)</script> <!-- y";
+  const changed = { ...content, person: { ...content.person, summary: evil } };
+  const { head } = render({ ...opts, content: changed });
+  expect(head.match(/<\/script>/g)).toHaveLength(1);
+  expect(head).not.toContain("<!--");
+  const m = /<script type="application\/ld\+json">([\s\S]*?)<\/script>/.exec(head);
+  expect(JSON.parse(m![1]!).description).toBe(evil);
 });

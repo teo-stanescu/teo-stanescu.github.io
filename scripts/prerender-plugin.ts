@@ -1,6 +1,6 @@
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
-import { runnerImport, type Plugin, type ViteDevServer } from "vite";
+import { runnerImport, type Plugin, type ResolvedConfig, type ViteDevServer } from "vite";
 
 export function injectHtml(template: string, parts: { head: string; html: string }): string {
   for (const marker of ["<!--app-html-->", "<!--app-head-->"]) {
@@ -12,26 +12,34 @@ export function injectHtml(template: string, parts: { head: string; html: string
     .replace("<!--app-html-->", () => parts.html);
 }
 
+export const entryPath = (root: string): string => resolve(root, "src/entry-server.tsx");
+
 export function prerender(): Plugin {
   let server: ViteDevServer | undefined;
-  let hasCv = false;
-  let base = "/";
-  const entry = "/src/entry-server.tsx";
+  let config: ResolvedConfig;
 
   return {
     name: "prerender",
-    configResolved(config) {
-      base = config.base;
-      hasCv = existsSync(resolve(config.publicDir, "cv.pdf"));
+    configResolved(c) {
+      config = c;
     },
     configureServer(s) {
       server = s;
     },
     async transformIndexHtml(html) {
+      const entry = entryPath(config.root);
+      // Build mode loads the entry with the project config: same root, plugins, alias and define.
       const mod = server
         ? await server.ssrLoadModule(entry)
-        : (await runnerImport<typeof import("../src/entry-server")>(entry)).module;
-      return injectHtml(html, mod.render({ hasCv, base }));
+        : (
+            await runnerImport<typeof import("../src/entry-server")>(entry, {
+              root: config.root,
+              mode: config.mode,
+              configFile: config.configFile,
+            })
+          ).module;
+      const hasCv = existsSync(resolve(config.publicDir, "cv.pdf"));
+      return injectHtml(html, mod.render({ hasCv, base: config.base }));
     },
   };
 }

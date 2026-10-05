@@ -1,5 +1,5 @@
 import type { Content } from "../model";
-import { SITE_URL, GITHUB_URL } from "../config";
+import { SITE_URL, GITHUB_URL, FONT_PRELOAD_HREF } from "../config";
 
 export function Head({ content }: { content: Content }) {
   const { seo, person } = content;
@@ -24,7 +24,7 @@ export function Head({ content }: { content: Content }) {
       <meta property="og:image" content={`${SITE_URL}og-card.png`} />
       <meta name="twitter:card" content="summary_large_image" />
       <link rel="icon" href="data:," />
-      <link rel="preload" href="/fonts/inter-latin.woff2" as="font" type="font/woff2" crossOrigin="" />
+      <link rel="preload" href={FONT_PRELOAD_HREF} as="font" type="font/woff2" crossOrigin="" />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}

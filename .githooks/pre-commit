@@ -1,0 +1,8 @@
+#!/bin/sh
+# .githooks/pre-commit
+set -e
+npm run -s lint
+npm run -s typecheck
+npm test --silent
+npm run -s test:local
+node scripts/check-private.mjs --staged

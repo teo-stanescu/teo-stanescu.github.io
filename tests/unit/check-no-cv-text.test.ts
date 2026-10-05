@@ -18,6 +18,46 @@ describe("check-no-cv-text", () => {
     expect(findCvText("const a = <a aria-label={labels.telemetry} />;", "x.tsx")).toHaveLength(0);
   });
 
+  it("nocvtext-flags-expression-strings", () => {
+    const bad = [
+      '<p>{"Hello"}</p>',
+      "<p>{`Hello`}</p>",
+      "<p>{`a ${x} b`}</p>",
+      '<p>{x ? "Yes" : "No"}</p>',
+      '<a aria-label={"Menu"} />',
+      "<p>2017 12</p>",
+      '<a aria-description="Menu" />',
+      '<a aria-roledescription="Menu" />',
+      '<a data-role="Lead" />',
+      '<a label="Menu" />',
+      '<a placeholder={"Name"} />',
+    ];
+    for (const src of bad) expect(findCvText(`const a = ${src};`, "x.tsx").length, src).toBeGreaterThan(0);
+  });
+
+  it("nocvtext-allows-plumbing", () => {
+    const ok = [
+      '<a className="btn" href={`${base}cv.pdf`} id={`stage-${s.id}`} key="k" />',
+      '<a aria-hidden="true" data-t="state" data-x={v} />',
+      '<link rel="icon" href="data:," />',
+      "<p>{labels.x}</p>",
+      '<p>{" "}</p>',
+      "<p>{a ?? \"\"}</p>",
+    ];
+    for (const src of ok) expect(findCvText(`const a = ${src};`, "x.tsx"), src).toEqual([]);
+  });
+
+  it("nocvtext-entities-are-glyphs", () => {
+    expect(findCvText("const a = <p>&nbsp;</p>;", "x.tsx")).toEqual([]);
+    expect(findCvText("const a = <p>&mdash;&#8212;</p>;", "x.tsx")).toEqual([]);
+    expect(findCvText("const a = <p>&nbsp;Hi</p>;", "x.tsx")).toHaveLength(1);
+  });
+
+  it("nocvtext-scans-ts-files", () => {
+    expect(findCvText('export const t = "Principal Engineer";', "x.ts")).toHaveLength(1);
+    expect(findCvText('import a from "./a";\nexport type T = "x";\nexport const n = 1;', "x.ts")).toEqual([]);
+  });
+
   it("nocvtext-components-clean", () => {
     const r = spawnSync(
       process.execPath,

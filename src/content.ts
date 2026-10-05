@@ -236,5 +236,6 @@ export const content: Content = {
     previous: "Previous",
     results: "Search results",
     more: "and {n} more",
+    shortQuery: "Type 2 or more characters",
   },
 };

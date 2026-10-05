@@ -41,6 +41,7 @@ const state = {
   hits: [] as Hit[],
   more: 0,
   sel: -1,
+  short: false, // A query of one character: the list holds only the hint.
 };
 
 interface Ui {
@@ -59,7 +60,7 @@ interface Ui {
 
 let ui: Ui | null = null;
 let docs: Doc[] = [];
-let labels = { noMatches: "", of: "", more: "" };
+let labels = { noMatches: "", of: "", more: "", shortQuery: "" };
 let prevFocus: HTMLElement | null = null;
 let dirty = false;
 let schedule: (() => void) | null = null;
@@ -199,6 +200,7 @@ function hidePopovers(): void {
 
 function openList(): void {
   if (!ui) return;
+  if (state.query === "" && !state.short) return;
   const hasNote = state.matches.length === 0 || state.more > 0;
   if (state.hits.length === 0 && !hasNote) return;
   hidePopovers(); // One popover or list at a time.
@@ -268,9 +270,18 @@ function scan(): void {
   state.active = -1;
   setSel(-1);
   clearHighlights();
+  state.short = false;
   if (q === null) {
-    closeList();
+    // Under 2 characters: empty the list, so no stale option stays, and show the hint.
+    ui.list.replaceChildren();
+    ui.more.hidden = true;
+    ui.more.textContent = "";
+    state.short = ui.input.value.trim() !== "";
+    ui.note.hidden = !state.short;
+    ui.note.textContent = state.short ? labels.shortQuery : "";
     updateCounter();
+    if (state.short) openList();
+    else closeList();
     return;
   }
   const seen = new Map<Group, number>();
@@ -288,6 +299,7 @@ function scan(): void {
   renderList();
   updateCounter();
   openList();
+  if (state.matches.length > 0) reveal(state.matches[0]);
 }
 
 function flush(): void {
@@ -317,6 +329,11 @@ function setActive(i: number, jump: boolean): void {
   updateCounter();
   if (!jump) return;
   closeList();
+  reveal(m);
+}
+
+// Open the Details around a match and scroll it into view.
+function reveal(m: Match): void {
   openDetails(m.doc.block.nodes[0]);
   const r = rangesOf(m)[0];
   if (!r) return;
@@ -358,6 +375,7 @@ function clear(restore: boolean): void {
   state.matches = [];
   state.hits = [];
   state.more = 0;
+  state.short = false;
   state.active = -1;
   clearHighlights();
   closeList();
@@ -372,7 +390,9 @@ function clear(restore: boolean): void {
   if (restore) {
     const back = prevFocus;
     prevFocus = null;
-    if (back && back.isConnected) back.focus();
+    if (back && back.isConnected && back.checkVisibility()) back.focus();
+    else if (window.matchMedia(PHONE).matches) ui.toggle.focus(); // The row is closed: the button opened it.
+    else if (back) ui.input.focus(); // The earlier element is gone: stay in the search field.
     else if (document.activeElement && ui.root.contains(document.activeElement)) ui.input.blur();
     else if (document.activeElement instanceof HTMLElement && document.activeElement.hasAttribute("tabindex")) {
       document.activeElement.blur();
@@ -408,7 +428,7 @@ function inputKey(e: KeyboardEvent): void {
     case "ArrowUp": {
       e.preventDefault();
       flush();
-      if (!state.listOpen) openList();
+      if (!state.listOpen && !state.short) openList();
       if (opts === 0) return;
       const d = e.key === "ArrowDown" ? 1 : -1;
       setSel(state.sel < 0 ? (d > 0 ? 0 : opts - 1) : (state.sel + d + opts) % opts);
@@ -487,7 +507,12 @@ function build(bar: HTMLElement): Ui {
 
   field.append(input, count, prev, next, pop);
   root.append(toggle, field);
-  labels = { noMatches: d.noMatches ?? "", of: d.of ?? "", more: d.more ?? "" };
+  labels = {
+    noMatches: d.noMatches ?? "",
+    of: d.of ?? "",
+    more: d.more ?? "",
+    shortQuery: d.shortQuery ?? "",
+  };
   return { root, toggle, field, input, count, prev, next, pop, list, note, more };
 }
 
@@ -524,7 +549,10 @@ export function startSearch(): void {
   u.next.addEventListener("click", () => step(1));
   u.toggle.addEventListener("click", () => {
     if (u.root.hasAttribute("data-open")) clear(true);
-    else openRow();
+    else {
+      prevFocus = u.toggle; // The button is the earlier element when it opens the row.
+      openRow();
+    }
   });
 
   onKey = (e: KeyboardEvent) => {

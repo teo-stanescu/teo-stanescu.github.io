@@ -40,6 +40,7 @@ it("render-topbar-slot-labels", () => {
     "data-placeholder": l.placeholder,
     "data-placeholder-touch": l.placeholderTouch,
     "data-no-matches": l.noMatches,
+    "data-short-query": l.shortQuery,
     "data-of": l.of,
     "data-next": l.next,
     "data-previous": l.previous,

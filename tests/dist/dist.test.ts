@@ -68,6 +68,7 @@ describe("dist", () => {
       previous: _s8,
       results: _s9,
       more: _s10,
+      shortQuery: _s11,
       ...labels
     } = rest.labels;
     const strings: string[] = [];

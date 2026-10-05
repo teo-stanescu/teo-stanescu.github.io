@@ -354,10 +354,11 @@ test("e2e-search-scope", async ({ page }) => {
   // A phrase that splits across the lang span.
   expect(await found('("luft- und raumfahrt ingenieurwissenschaften"), hochschule')).toBe("1 of 1");
   expect(await hlSize(page, "search-active")).toBeGreaterThanOrEqual(2);
-  // A one-character query finds nothing and shows no list.
+  // A one-character query finds nothing and shows no list, only the hint.
   await type(page, "a");
   await expect(counter(page)).toHaveText("");
-  await expect(page.locator(".search-pop")).toBeHidden();
+  await expect(options(page)).toHaveCount(0);
+  await expect(page.locator(".search-pop")).toContainText("Type 2 or more characters");
 });
 
 test("e2e-search-scope-hero", async ({ page }) => {
@@ -629,4 +630,76 @@ test("e2e-search-ignores-map-codes", async ({ page }) => {
   expect(await expectedCount(page, "LROP")).toBe(0);
   await type(page, "EDDW");
   await expect(page.getByRole("option")).toHaveCount(0);
+});
+
+test("e2e-search-typing-scrolls-to-first", async ({ page }) => {
+  await ready(page);
+  const d = page.locator("details", { hasText: "raumfahrt" });
+  await expect(d).not.toHaveJSProperty("open", true);
+  await type(page, "raumfahrt");
+  await expect(counter(page)).toHaveText("1 of 1");
+  await expect(d).toHaveJSProperty("open", true);
+  await expect
+    .poll(() =>
+      page.evaluate(() => {
+        const r = ([...CSS.highlights.get("search-active")!][0] as Range).getBoundingClientRect();
+        return r.height > 0 && r.top >= 0 && r.bottom <= window.innerHeight;
+      }),
+    )
+    .toBe(true);
+  // Clearing closes the Details that the search opened.
+  await page.keyboard.press("Escape");
+  await page.keyboard.press("Escape");
+  await expect(d).not.toHaveJSProperty("open", true);
+});
+
+test("e2e-search-short-query-hint", async ({ page }) => {
+  await ready(page);
+  const pop = page.locator(".search-pop");
+  await type(page, "bremen");
+  await expect(options(page).first()).toBeVisible();
+  await page.keyboard.press("ArrowDown");
+  await expect(box(page)).toHaveAttribute("aria-activedescendant", /search-opt-/);
+  // Shorten the query to one character: no list, no stale option, the hint shows.
+  await type(page, "b");
+  await expect(pop).toContainText("Type 2 or more characters");
+  await expect(options(page)).toHaveCount(0);
+  await expect(box(page)).not.toHaveAttribute("aria-activedescendant", /.*/);
+  await expect(box(page)).toHaveAttribute("aria-expanded", "false");
+  expect(await hlSize(page, "search-all")).toBe(0);
+  // Escape, then ArrowDown, must not open an empty box.
+  await page.keyboard.press("Escape");
+  await expect(pop).toBeHidden();
+  await page.keyboard.press("ArrowDown");
+  await expect(pop).toBeHidden();
+  await expect(box(page)).not.toHaveAttribute("aria-activedescendant", /.*/);
+  // An empty field shows no hint.
+  await box(page).fill("");
+  await page.waitForTimeout(80);
+  await expect(pop).toBeHidden();
+});
+
+test("e2e-search-escape-returns-focus", async ({ page }) => {
+  // Phone: the row closes, so focus goes to the search button that opened it.
+  await ready(page, 360, 640);
+  const toggle = page.locator("#topbar .search-toggle");
+  await toggle.click();
+  await type(page, "nodejs");
+  await expect(options(page).first()).toBeVisible();
+  await page.keyboard.press("Escape");
+  await page.keyboard.press("Escape");
+  await expect(page.locator("#search-input")).toHaveValue("");
+  await expect(toggle).toBeFocused();
+
+  // Wide: an earlier element that is now hidden leaves focus in the search field.
+  await ready(page, 1024, 768);
+  const btn = page.locator("#topbar .contents-btn");
+  await btn.focus();
+  await page.keyboard.press("/");
+  await type(page, "nodejs");
+  await page.evaluate(() => document.querySelector<HTMLElement>("#topbar .contents-btn")!.style.display = "none");
+  await page.keyboard.press("Escape");
+  await page.keyboard.press("Escape");
+  await expect(box(page)).toHaveValue("");
+  await expect(box(page)).toBeFocused();
 });

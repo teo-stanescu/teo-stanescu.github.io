@@ -105,6 +105,7 @@ export interface Labels {
   readonly previous: string;
   readonly results: string;
   readonly more: string;
+  readonly shortQuery: string;
 }
 
 export interface Content {

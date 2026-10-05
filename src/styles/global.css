@@ -16,6 +16,11 @@
   --on-accent: #0b0f14;
   --border-strong: #5b6877;
   --rule: #2a333e;
+  --hl-bg: #4d3d10;
+  --hl-fg: #f5ecd7;
+  --hl-active-bg: #e8a94a;
+  --hl-active-fg: #0b0f14;
+  --hl-active-line: #ffffff;
 
   --s-1: 0.25rem;
   --s-2: 0.5rem;
@@ -42,9 +47,9 @@
   --pad: 1rem;
   --track: 12px;
   --lane: 24px;
-  --bar-h: 3rem;
+  --bar-h: 48px;
   --panel-w: 0px;
-  --bar-slot: 8.5rem;
+  --bar-slot: 10rem;
   --clear: calc(var(--bar-h) + var(--s-4));
 }
 
@@ -58,6 +63,11 @@
     --on-accent: #ffffff;
     --border-strong: #7a8594;
     --rule: #d5dae1;
+    --hl-bg: #ffe08a;
+    --hl-fg: #14181f;
+    --hl-active-bg: #8a4b00;
+    --hl-active-fg: #ffffff;
+    --hl-active-line: #14181f;
   }
 }
 
@@ -80,7 +90,7 @@
 /* From 768 px the topbar slot is a fixed 48 px bar. The script fills it. Space is reserved from the first frame. */
 @media (min-width: 768px) {
   html.js {
-    --bar-h: 3rem;
+    --bar-h: 48px;
   }
 }
 
@@ -1036,4 +1046,287 @@ html.js .telemetry {
   display: inline-flex;
   align-items: center;
   min-height: 44px;
+}
+
+/* Search. The script builds the UI inside #topbar. The bar space is reserved by html.js above, so adding the UI shifts nothing. */
+::highlight(search-all) {
+  background-color: var(--hl-bg);
+  color: var(--hl-fg);
+}
+
+/* ::highlight allows no outline, so the active match adds a 3 px underline to the stronger background. */
+::highlight(search-active) {
+  background-color: var(--hl-active-bg);
+  color: var(--hl-active-fg);
+  text-decoration-line: underline;
+  text-decoration-thickness: 3px;
+  text-decoration-color: var(--hl-active-line);
+  text-underline-offset: 3px;
+}
+
+@media (forced-colors: active) {
+  ::highlight(search-all) {
+    background-color: Mark;
+    color: MarkText;
+  }
+
+  ::highlight(search-active) {
+    background-color: Highlight;
+    color: HighlightText;
+    text-decoration-color: HighlightText;
+  }
+}
+
+.search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 34rem;
+}
+
+.search-toggle {
+  display: none;
+}
+
+.search-field {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.search-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 2.25rem;
+  padding: 0 var(--s-3);
+  font: inherit;
+  font-size: var(--fs-body);
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+}
+
+.search-input::placeholder {
+  color: var(--muted);
+  opacity: 1;
+}
+
+.search-count {
+  flex: none;
+  min-width: 5.5ch;
+  font-family: var(--mono);
+  font-size: var(--fs-label);
+  color: var(--muted);
+  white-space: nowrap;
+  text-align: right;
+}
+
+.search-prev,
+.search-next,
+.search-toggle {
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  font: inherit;
+  font-size: var(--fs-body);
+  line-height: 1;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.search-prev,
+.search-next {
+  display: inline-flex;
+}
+
+/* Magnifier: a ring and a handle. */
+.search-icon {
+  position: relative;
+  width: 12px;
+  height: 12px;
+  margin: -3px 0 0 -3px;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+}
+
+.search-icon::after {
+  content: "";
+  position: absolute;
+  left: 9px;
+  top: 10px;
+  width: 7px;
+  height: 2px;
+  background: currentColor;
+  border-radius: 1px;
+  transform: rotate(45deg);
+  transform-origin: 0 0;
+}
+
+.search-prev:hover:enabled,
+.search-next:hover:enabled,
+.search-toggle:hover {
+  border-color: var(--accent);
+}
+
+.search-prev:disabled,
+.search-next:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.search-pop {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: var(--s-2);
+  max-height: min(26rem, calc(100dvh - var(--bar-h) - 2rem));
+  overflow-y: auto;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.35);
+}
+
+.search-pop[hidden],
+.search-list[hidden],
+.search-note[hidden] {
+  display: none;
+}
+
+.search-opt {
+  display: block;
+  min-width: 0;
+  padding: var(--s-2) var(--s-3);
+  cursor: pointer;
+}
+
+.search-opt + .search-opt {
+  border-top: 1px solid var(--rule);
+}
+
+.search-opt:hover,
+.search-opt[aria-selected="true"] {
+  background: var(--bg);
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.search-opt-title {
+  display: block;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.search-opt-snip {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  font-size: var(--fs-small);
+  line-height: 1.4;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.search-opt-mark {
+  background: var(--hl-bg);
+  color: var(--hl-fg);
+}
+
+.search-note {
+  max-width: none;
+  padding: var(--s-2) var(--s-3);
+  font-size: var(--fs-small);
+  color: var(--muted);
+}
+
+/* Below 768 px the bar slot holds a search button and the Contents button. A tap opens a full-width row. */
+@media (max-width: 767.98px) {
+  .search {
+    flex: none;
+    max-width: none;
+  }
+
+  .search-toggle,
+  .search-prev,
+  .search-next {
+    width: 44px;
+    height: 44px;
+  }
+
+  .search-toggle {
+    display: inline-flex;
+  }
+
+  .search-field {
+    display: none;
+  }
+
+  .search[data-open] {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: var(--bar-h);
+    padding-inline: var(--s-2);
+    background: var(--surface);
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .search[data-open] .search-field {
+    display: flex;
+  }
+
+  .search-field {
+    position: static;
+  }
+
+  .search-input {
+    height: 44px;
+  }
+
+  /* The 48 px bar would clip an outer ring on 44 px controls. */
+  .search-input:focus-visible,
+  .search-toggle:focus-visible,
+  .search-prev:focus-visible,
+  .search-next:focus-visible {
+    outline-offset: -3px;
+  }
+
+  .search-pop {
+    position: fixed;
+    top: var(--bar-h);
+    margin-top: 0;
+    border-width: 0 0 1px;
+    border-radius: 0;
+    max-height: calc(100dvh - var(--bar-h));
+  }
+
+  .contents-btn {
+    padding-inline: var(--s-2);
+  }
+}
+
+/* Below 480 px the bar slot is wide, so the years value drops. The stage and the role keep the room. */
+@media (max-width: 479.98px) {
+  html.js .telemetry-row:nth-child(3) {
+    display: none;
+  }
 }

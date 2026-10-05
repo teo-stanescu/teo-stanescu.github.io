@@ -179,6 +179,38 @@ test("e2e-bar-height", async ({ page }) => {
   });
   expect(m.pos).toBe("fixed");
   expect(m.h).toBeLessThanOrEqual(56);
+
+  // The top bar slot also holds the search and Contents buttons. Each is 44 px or more and sits inside the bar.
+  await page.waitForSelector("html.search-ready.nav-ready");
+  const b = await page.evaluate(() => {
+    const bar = document.querySelector(".telemetry")!.getBoundingClientRect();
+    const rect = (sel: string) => document.querySelector(sel)!.getBoundingClientRect();
+    return {
+      bar: { top: bar.top, bottom: bar.bottom },
+      slot: rect("#topbar").height,
+      search: rect("#topbar .search-toggle"),
+      contents: rect("#topbar .contents-btn"),
+      vw: window.innerWidth,
+    };
+  });
+  expect(b.slot).toBeLessThanOrEqual(56);
+  for (const r of [b.search, b.contents]) {
+    expect(r.width).toBeGreaterThanOrEqual(44);
+    expect(r.height).toBeGreaterThanOrEqual(44);
+    expect(r.top).toBeGreaterThanOrEqual(b.bar.top - 0.5);
+    expect(r.bottom).toBeLessThanOrEqual(b.bar.bottom + 0.5);
+    expect(r.right).toBeLessThanOrEqual(b.vw + 0.5);
+  }
+  expect(b.search.right).toBeLessThanOrEqual(b.contents.left + 0.5);
+  // With the search row open, the row is still 56 px or less.
+  await page.locator("#topbar .search-toggle").click();
+  const row = await page.locator(".search").boundingBox();
+  expect(row!.height).toBeLessThanOrEqual(56);
+  expect(row!.width).toBeGreaterThanOrEqual(359);
+  // At 1024 px the bar is 48 px or less.
+  await openAt(page, 1024, 700);
+  await page.waitForSelector("html.search-ready");
+  expect((await page.locator("#topbar").boundingBox())!.height).toBeLessThanOrEqual(48);
 });
 
 // In-view text and controls against the telemetry rect.
@@ -224,7 +256,7 @@ test("e2e-bar-covers-no-text", async ({ page }) => {
     await page.goto("/");
     const count = await page.evaluate(
       () =>
-        [...document.querySelectorAll("a[href], summary, button, [tabindex]:not([tabindex='-1'])")].filter(
+        [...document.querySelectorAll("a[href], summary, button:not(:disabled), input, [tabindex]:not([tabindex='-1'])")].filter(
           (e) => e.getClientRects().length > 0,
         ).length,
     );
@@ -243,6 +275,22 @@ test("e2e-bar-covers-no-text", async ({ page }) => {
         document.activeElement!.closest("#topbar") ? Infinity : document.activeElement!.getBoundingClientRect().top,
       );
       expect(top, `stop ${i} @${w}`).toBeGreaterThanOrEqual((await barBottom()) - 0.5);
+    }
+
+    // Case 3b: below 768 px the search and Contents buttons never cover the telemetry values.
+    if (w < 768) {
+      await page.goto("/");
+      await page.waitForSelector("html.search-ready.nav-ready");
+      const gap = await page.evaluate(() => {
+        const slot = document.querySelector("#topbar")!.getBoundingClientRect();
+        const kids = [...document.querySelectorAll("#topbar .search-toggle, #topbar .contents-btn")];
+        const left = Math.min(...kids.map((k) => k.getBoundingClientRect().left), slot.left + slot.width);
+        const vals = [...document.querySelectorAll<HTMLElement>(".telemetry dd")]
+          .filter((d) => d.getBoundingClientRect().width > 2)
+          .map((d) => d.getBoundingClientRect().right);
+        return { left, maxRight: Math.max(0, ...vals) };
+      });
+      expect(gap.maxRight, `telemetry values end before the buttons @${w}`).toBeLessThanOrEqual(gap.left + 0.5);
     }
 
     // Case 4: padding and scroll padding below 768 px.
@@ -290,6 +338,7 @@ test("e2e-bar-fits-every-role-360", async ({ page }) => {
   }
 });
 
+// 1280 and 1920 px, with the client module delayed by 1.5 s. The bar, the rail and the search UI are present.
 test("e2e-cls-under-0-1", async ({ page }) => {
   await page.addInitScript(() => {
     (window as unknown as { __cls: number }).__cls = 0;
@@ -299,17 +348,30 @@ test("e2e-cls-under-0-1", async ({ page }) => {
       }
     }).observe({ type: "layout-shift", buffered: true });
   });
-  await page.goto("/");
-  await page.evaluate(async () => {
-    const h = document.documentElement.scrollHeight;
-    for (let y = 0; y <= h; y += 300) {
-      window.scrollTo(0, y);
-      await new Promise((r) => setTimeout(r, 30));
-    }
+  await page.route("**/assets/*.js", async (route) => {
+    await new Promise((r) => setTimeout(r, 1500));
+    await route.continue();
   });
-  await page.waitForTimeout(300);
-  const cls = await page.evaluate(() => (window as unknown as { __cls: number }).__cls);
-  expect(cls).toBeLessThan(0.1);
+  for (const [w, h] of [
+    [1280, 800],
+    [1920, 1080],
+  ]) {
+    await page.setViewportSize({ width: w, height: h });
+    await page.goto("/");
+    await page.waitForSelector("html.js.search-ready.nav-ready");
+    await expect(page.locator("#nav")).toBeVisible();
+    await expect(page.locator("#topbar input")).toBeVisible();
+    await page.evaluate(async () => {
+      const height = document.documentElement.scrollHeight;
+      for (let y = 0; y <= height; y += 300) {
+        window.scrollTo(0, y);
+        await new Promise((r) => setTimeout(r, 30));
+      }
+    });
+    await page.waitForTimeout(300);
+    const cls = await page.evaluate(() => (window as unknown as { __cls: number }).__cls);
+    expect(cls, `${w}`).toBeLessThanOrEqual(0.1);
+  }
 });
 
 test("e2e-zoom-200-no-clip", async ({ page }) => {
@@ -354,6 +416,8 @@ test("e2e-landscape-short", async ({ page }) => {
 for (const [w, h] of [
   [768, 1024],
   [1024, 768],
+  [1280, 800],
+  [1920, 1080],
 ] as const) {
   test(`e2e-cls-delayed-script-${w}x${h}`, async ({ page }) => {
     await page.setViewportSize({ width: w, height: h });
@@ -374,6 +438,47 @@ for (const [w, h] of [
     expect(await page.evaluate(() => (window as unknown as { __cls: number }).__cls)).toBeLessThan(0.1);
   });
 }
+
+// The bar, the search UI and the buttons come from CSS space, so a late script shifts nothing (0.01 or less).
+test("e2e-bar-reserves-space-no-shift", async ({ page }) => {
+  await page.addInitScript(() => {
+    (window as unknown as { __cls: number }).__cls = 0;
+    new PerformanceObserver((list) => {
+      for (const e of list.getEntries() as unknown as { value: number; hadRecentInput: boolean }[]) {
+        if (!e.hadRecentInput) (window as unknown as { __cls: number }).__cls += e.value;
+      }
+    }).observe({ type: "layout-shift", buffered: true });
+  });
+  await page.route("**/assets/*.js", async (route) => {
+    await new Promise((r) => setTimeout(r, 1500));
+    await route.continue();
+  });
+  for (const w of [360, 768, 1024, 1280, 1920]) {
+    await page.setViewportSize({ width: w, height: 800 });
+    await page.goto("/", { waitUntil: "commit" });
+    await page.waitForSelector("html.js", { state: "attached" });
+    await page.waitForTimeout(150);
+    expect(await page.evaluate(() => document.documentElement.classList.contains("search-ready"))).toBe(false);
+    // Before the script: record where the bar and the first content sit.
+    const before = await page.evaluate(() => ({
+      bar: document.getElementById("topbar")?.getBoundingClientRect().height ?? -1,
+      h1: document.querySelector("h1")?.getBoundingClientRect().top ?? -1,
+    }));
+    await page.waitForSelector("html.search-ready");
+    const after = await page.evaluate(() => ({
+      bar: document.getElementById("topbar")!.getBoundingClientRect().height,
+      h1: document.querySelector("h1")!.getBoundingClientRect().top,
+      cls: (window as unknown as { __cls: number }).__cls,
+    }));
+    await page.waitForTimeout(300);
+    const cls = await page.evaluate(() => (window as unknown as { __cls: number }).__cls);
+    expect(cls, `${w}`).toBeLessThanOrEqual(0.01);
+    expect(after.bar).toBeLessThanOrEqual(w < 768 ? 56 : 48);
+    // The space is there before the script runs, and the content does not move when it arrives.
+    if (before.h1 >= 0) expect(Math.abs(after.h1 - before.h1), `${w} h1 moved`).toBeLessThanOrEqual(1);
+    if (before.bar >= 0 && w >= 768) expect(Math.abs(after.bar - before.bar), `${w} bar`).toBeLessThanOrEqual(1);
+  }
+});
 
 test("e2e-zoom-200-contents-fallback", async ({ page }) => {
   // 1280 px at 200 percent zoom is a 640 px viewport.

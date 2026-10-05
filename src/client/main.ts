@@ -4,6 +4,7 @@ import { startScroll } from "./scroll";
 import { startTrajectory } from "./trajectory";
 import { startTelemetry } from "./telemetry";
 import { startNav, stopNav } from "./nav";
+import { startSearch, stopSearch } from "./search";
 
 const root = document.documentElement;
 try {
@@ -11,6 +12,7 @@ try {
   startTrajectory();
   startTelemetry();
   startNav();
+  startSearch();
   root.classList.add("js");
   const reduce = window.matchMedia("(prefers-reduced-motion: reduce)");
   const apply = () => root.classList.toggle("motion", !reduce.matches);
@@ -19,5 +21,6 @@ try {
 } catch {
   // A start-up error leaves the static prerendered page, which is complete.
   stopNav();
+  stopSearch();
   root.classList.remove("js", "motion", "nav-ready", "search-ready");
 }

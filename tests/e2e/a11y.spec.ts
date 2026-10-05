@@ -33,6 +33,57 @@ test("e2e-axe-both-themes", async ({ page }) => {
   }
 });
 
+test("e2e-axe-search-states", async ({ page }) => {
+  const q = async (text: string) => {
+    await page.keyboard.press("/");
+    await page.getByRole("combobox").fill("");
+    await page.getByRole("combobox").pressSequentially(text);
+    await expect(page.locator(".search-count")).toHaveText(/^1 of \d+$/);
+    await page.waitForTimeout(80);
+  };
+  for (const scheme of ["dark", "light"] as const) {
+    await page.emulateMedia({ colorScheme: scheme });
+
+    // List open, highlights on, at 1280 and at 360 (full-width row).
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto("/");
+    await page.waitForSelector("html.search-ready");
+    await q("architecture");
+    await expect(page.getByRole("option").first()).toBeVisible();
+    expect(await axe(page), `${scheme} list open 1280`).toEqual([]);
+    // Highlights on, list closed.
+    await page.keyboard.press("Escape");
+    expect(await axe(page), `${scheme} highlights 1280`).toEqual([]);
+
+    await page.setViewportSize({ width: 360, height: 640 });
+    await page.goto("/");
+    await page.waitForSelector("html.search-ready");
+    await page.locator("#topbar .search-toggle").click();
+    await page.getByRole("combobox").pressSequentially("architecture");
+    await expect(page.getByRole("option").first()).toBeVisible();
+    expect(await axe(page), `${scheme} list open 360`).toEqual([]);
+
+    // Contents popover open with highlights on. The list closes when the popover opens.
+    await page.setViewportSize({ width: 1024, height: 768 });
+    await page.goto("/");
+    await page.waitForSelector("html.search-ready");
+    await q("architecture");
+    await page.keyboard.press("Escape");
+    await page.locator("#topbar .contents-btn").click();
+    await expect(page.locator("#nav")).toBeVisible();
+    expect(await page.evaluate(() => CSS.highlights.get("search-all")!.size)).toBeGreaterThan(0);
+    expect(await axe(page), `${scheme} contents popover 1024`).toEqual([]);
+
+    // No match.
+    await page.goto("/");
+    await page.waitForSelector("html.search-ready");
+    await page.keyboard.press("/");
+    await page.getByRole("combobox").pressSequentially("zzzzqq");
+    await expect(page.locator(".search-pop")).toContainText("No matches");
+    expect(await axe(page), `${scheme} no match`).toEqual([]);
+  }
+});
+
 // WCAG relative luminance contrast, run in the page.
 const CONTRAST_FN = `
   const parse = (s) => {
@@ -91,7 +142,7 @@ test("e2e-tab-order-visual", async ({ page }) => {
   await page.goto("/");
   // Only visible controls are Tab stops. Role links of inactive stages are hidden.
   const stops = await page.evaluate(() =>
-    [...document.querySelectorAll<HTMLElement>("a[href], summary, button, [tabindex]:not([tabindex='-1'])")]
+    [...document.querySelectorAll<HTMLElement>("a[href], summary, button:not(:disabled), input, [tabindex]:not([tabindex='-1'])")]
       .filter((e) => e.getClientRects().length > 0 && getComputedStyle(e).visibility !== "hidden")
       .map((e, i) => {
         // Mark the stop. The active nav entry changes while focus moves, so indexes must not depend on what shows later.
@@ -101,21 +152,24 @@ test("e2e-tab-order-visual", async ({ page }) => {
           i,
           skip: e.classList.contains("skip-link"),
           nav: !!e.closest("nav"),
+          bar: !!e.closest("#topbar"),
           top: r.top + window.scrollY,
           left: r.left + window.scrollX,
         };
       }),
   );
   expect(stops[0].skip).toBe(true);
-  // Visual order: skip link, the left rail (top to bottom), then the hero buttons and content.
+  // Visual order: skip link, the search controls in the top bar, the left rail, then the hero buttons and content.
   const byPos = (a: { top: number; left: number }, b: { top: number; left: number }) =>
     a.top - b.top || a.left - b.left;
+  const bar = stops.filter((s) => s.bar).sort(byPos);
+  expect(bar.length).toBe(1); // The input. Previous and Next are disabled until a match exists, so they are no stops.
   const rail = stops.filter((s) => s.nav).sort(byPos);
   // The list holds every entry. Only the seven stage-level entries and the active roles are Tab stops.
   expect(await page.locator("nav a[href]").count()).toBeGreaterThanOrEqual(15);
   expect(rail.length).toBeGreaterThanOrEqual(7);
-  const rest = stops.filter((s) => !s.skip && !s.nav).sort(byPos);
-  const expected = [...rail, ...rest].map((s) => s.i);
+  const rest = stops.filter((s) => !s.skip && !s.nav && !s.bar).sort(byPos);
+  const expected = [...bar, ...rail, ...rest].map((s) => s.i);
   const seen: number[] = [];
   for (let n = 0; n < stops.length; n++) {
     await page.keyboard.press("Tab");
@@ -133,7 +187,7 @@ test("e2e-focus-visible", async ({ page }) => {
   await page.goto("/");
   const count = await page.evaluate(
     () =>
-      [...document.querySelectorAll("a[href], summary, button, [tabindex]:not([tabindex='-1'])")].filter(
+      [...document.querySelectorAll("a[href], summary, button:not(:disabled), input, [tabindex]:not([tabindex='-1'])")].filter(
         (e) => e.getClientRects().length > 0 && getComputedStyle(e).visibility !== "hidden",
       ).length,
   );

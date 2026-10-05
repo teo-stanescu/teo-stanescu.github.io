@@ -121,4 +121,11 @@ describe("content", () => {
   it("content-positioning-is-todo", () => {
     expect(present(content.person.positioning)).toBe(false);
   });
+
+  it("content-details-no-duplicate-parts", () => {
+    for (const r of roles()) {
+      const parts = [r.context, r.decision, r.outcome].filter((x): x is string => typeof x === "string");
+      for (const d of r.details) expect(parts, `${r.id}: ${String(d)}`).not.toContain(d as string);
+    }
+  });
 });

@@ -1,6 +1,17 @@
 export type Todo = { readonly todo: string };
 export type Text = string | Todo;
-export const todo = (note: string): Todo => ({ todo: note });
+// A Todo must never reach output. Any string or number coercion throws, so a Todo in a
+// template literal, String(), join(), an attribute or JSON fails the build (AC-09, E-06).
+export const todo = (note: string): Todo => {
+  const fail = (): never => {
+    throw new Error(`Todo reached output: ${note}`);
+  };
+  const t = { todo: note };
+  for (const k of ["toString", "valueOf", "toJSON", Symbol.toPrimitive]) {
+    Object.defineProperty(t, k, { value: fail, enumerable: false });
+  }
+  return Object.freeze(t);
+};
 export const present = (t: Text | undefined): t is string =>
   typeof t === "string" && t.length > 0;
 
@@ -90,6 +101,9 @@ export interface Content {
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 export function formatYearMonth(ym: YearMonth): string {
+  if (!Number.isInteger(ym.month) || ym.month < 1 || ym.month > 12) {
+    throw new Error(`Invalid month ${ym.month}: expected 1 to 12`);
+  }
   return `${MONTHS[ym.month - 1]} ${ym.year}`;
 }
 

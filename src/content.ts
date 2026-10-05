@@ -32,7 +32,6 @@ export const content: Content = {
             "Erasmus+ semester, Aerospace Engineering, Hochschule Bremen. Contacted several German universities myself to find one interested in a partnership.",
           outcome: todo("the brief states no outcome of the degree or the Erasmus+ semester"),
           details: [
-            "Bachelor of Science in Aerospace Engineering, Universitatea \"Politehnica\" Bucuresti.",
             "Erasmus+ semester, Aerospace Engineering (\"Luft- und Raumfahrt Ingenieurwissenschaften\"), Hochschule Bremen, September 2016 - February 2017.",
           ],
         },
@@ -55,7 +54,6 @@ export const content: Content = {
             "For a banking client: black-box testing of 20+ financial applications, test case design and execution, mentoring new colleagues.",
           outcome: todo("the brief states no outcome for this role"),
           details: [
-            "For a banking client: black-box testing of 20+ financial applications, test case design and execution, mentoring new colleagues.",
             "For a second client: Robot Framework automation for web APIs and databases, plus JMeter, SoapUI, Postman and Swagger.",
           ],
           clientRefs: ["a banking client", "a second client"],
@@ -113,9 +111,9 @@ export const content: Content = {
           dates: { start: { year: 2022, month: 2 }, end: { year: 2023, month: 2 } },
           teamSize: 5,
           focus: "Productized accelerators for banking",
-          context: "Led a team of 5 developers building productized accelerators for banking.",
-          decision:
-            "Reusable, ready-to-deploy solution components that shorten banking implementations on the FintechOS platform.",
+          context:
+            "Productized accelerators for banking: reusable, ready-to-deploy solution components that shorten banking implementations on the FintechOS platform.",
+          decision: "Led a team of 5 developers building productized accelerators for banking.",
           outcome: todo("the brief states no outcome for this role"),
           details: [],
         },

@@ -39,6 +39,9 @@ const NUMBER_WORDS: Record<string, string> = {
 const digits = (s: string): string =>
   s.toLowerCase().replace(/\b(one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)\b/g, (w) => NUMBER_WORDS[w]!);
 
+// A digit group matches only as a whole number, so "7" does not match "2017" or "20+".
+export const hasNumber = (text: string, d: string): boolean => new RegExp(`(^|\\D)${d}(?!\\d)`).test(text);
+
 const words = (s: string): string[] =>
   s.normalize("NFKD").replace(/\p{M}/gu, "").toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim().split(" ").filter(Boolean);
 
@@ -59,11 +62,19 @@ describe("provenance", () => {
     const b = brief();
     const lower = b.toLowerCase();
     for (const s of scanned(content)) {
-      for (const d of s.match(/\d+/g) ?? []) expect(lower, `digits ${d} in "${s}"`).toContain(d);
+      for (const d of s.match(/\d+/g) ?? []) expect(hasNumber(lower, d), `digits ${d} in "${s}"`).toBe(true);
       for (const w of s.match(/\b[A-Z][A-Za-z]*\b/g) ?? []) {
         expect(new RegExp(`\\b${w}\\b`, "i").test(b), `word ${w} in "${s}"`).toBe(true);
       }
     }
+  });
+
+  it("provenance-number-whole-token", () => {
+    expect(hasNumber("since 2017 and 20+ apps", "7")).toBe(false);
+    expect(hasNumber("since 2017 and 20+ apps", "201")).toBe(false);
+    expect(hasNumber("since 2017 and 20+ apps", "20")).toBe(true);
+    expect(hasNumber("a team of 12", "12")).toBe(true);
+    expect(hasNumber("a team of 12", "2")).toBe(false);
   });
 
   it("provenance-number-unit-pairs", () => {

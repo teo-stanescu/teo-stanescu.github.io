@@ -128,6 +128,22 @@ test.describe("without JavaScript", () => {
     expect(h1.y).toBeLessThanOrEqual(400);
   });
 
+  // Below 1280 px the no-JS nav lists sections only. From 1280 px it lists roles too.
+  test("e2e-nojs-nav-sections-only-below-1280", async ({ page }) => {
+    for (const w of [360, 768, 1279]) {
+      await page.setViewportSize({ width: w, height: 800 });
+      await page.goto("/");
+      await expect(page.locator("#nav li > ul a").first(), `${w} role links`).toBeHidden();
+      const links = page.locator("#nav > ul > li > a");
+      const n = await links.count();
+      expect(n, `${w} section links`).toBeGreaterThanOrEqual(7);
+      for (let i = 0; i < n; i++) await expect(links.nth(i), `${w} link ${i}`).toBeVisible();
+    }
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto("/");
+    await expect(page.locator("#nav li > ul a").first()).toBeVisible();
+  });
+
   test("e2e-nojs-panel-aligned-1280", async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 800 });
     await page.goto("/");

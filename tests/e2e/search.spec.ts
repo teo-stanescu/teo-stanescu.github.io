@@ -356,7 +356,7 @@ test("e2e-search-scope", async ({ page }) => {
   expect(await hlSize(page, "search-active")).toBeGreaterThanOrEqual(2);
   // A one-character query finds nothing and shows no list, only the hint.
   await type(page, "a");
-  await expect(counter(page)).toHaveText("");
+  await expect(counter(page)).toHaveText("Type 2 or more characters");
   await expect(options(page)).toHaveCount(0);
   await expect(page.locator(".search-pop")).toContainText("Type 2 or more characters");
 });
@@ -702,4 +702,16 @@ test("e2e-search-escape-returns-focus", async ({ page }) => {
   await page.keyboard.press("Escape");
   await expect(box(page)).toHaveValue("");
   await expect(box(page)).toBeFocused();
+});
+
+// The short-query hint is announced by the polite live region.
+test("e2e-search-hint-announced", async ({ page }) => {
+  await page.goto("/");
+  await page.waitForSelector("html.search-ready");
+  await page.keyboard.press("/");
+  await page.getByRole("combobox").pressSequentially("e");
+  const live = page.locator('.search-count[aria-live="polite"]');
+  await expect(live).toHaveText("Type 2 or more characters");
+  await page.getByRole("combobox").pressSequentially("r");
+  await expect(live).toHaveText(/^1 of \d+$/);
 });

@@ -157,8 +157,12 @@ function paintActive(): void {
 function updateCounter(): void {
   if (!ui) return;
   const n = state.matches.length;
-  ui.count.textContent =
-    state.query === "" ? "" : `${n === 0 ? 0 : state.active + 1} ${labels.of} ${n}`;
+  // The short-query hint goes into this polite live region, so a screen reader announces it.
+  ui.count.textContent = state.short
+    ? labels.shortQuery
+    : state.query === ""
+      ? ""
+      : `${n === 0 ? 0 : state.active + 1} ${labels.of} ${n}`;
   const off = n === 0;
   ui.prev.disabled = off;
   ui.next.disabled = off;

@@ -50,6 +50,7 @@ interface Ui {
   field: HTMLElement;
   input: HTMLInputElement;
   count: HTMLElement;
+  status: HTMLElement;
   prev: HTMLButtonElement;
   next: HTMLButtonElement;
   pop: HTMLElement;
@@ -157,12 +158,12 @@ function paintActive(): void {
 function updateCounter(): void {
   if (!ui) return;
   const n = state.matches.length;
-  // The short-query hint goes into this polite live region, so a screen reader announces it.
-  ui.count.textContent = state.short
-    ? labels.shortQuery
-    : state.query === ""
-      ? ""
-      : `${n === 0 ? 0 : state.active + 1} ${labels.of} ${n}`;
+  ui.count.textContent =
+    state.query === "" ? "" : `${n === 0 ? 0 : state.active + 1} ${labels.of} ${n}`;
+  // A screen reader hears the short-query hint here. The visible hint in the list is hidden from it.
+  ui.status.textContent = state.short ? labels.shortQuery : "";
+  if (state.short) ui.note.setAttribute("aria-hidden", "true");
+  else ui.note.removeAttribute("aria-hidden");
   const off = n === 0;
   ui.prev.disabled = off;
   ui.next.disabled = off;
@@ -518,6 +519,9 @@ function build(bar: HTMLElement): Ui {
 
   const count = el("span", "search-count");
   count.setAttribute("aria-live", "polite");
+  const status = el("span", "visually-hidden");
+  status.setAttribute("role", "status");
+  status.setAttribute("aria-live", "polite");
   const prev = button("search-prev", d.previous ?? "", "↑");
   const next = button("search-next", d.next ?? "", "↓");
   prev.disabled = true;
@@ -536,7 +540,7 @@ function build(bar: HTMLElement): Ui {
   more.hidden = true;
   pop.append(list, note, more);
 
-  field.append(input, count, prev, next, pop);
+  field.append(input, count, status, prev, next, pop);
   root.append(toggle, field);
   labels = {
     noMatches: d.noMatches ?? "",
@@ -544,7 +548,7 @@ function build(bar: HTMLElement): Ui {
     more: d.more ?? "",
     shortQuery: d.shortQuery ?? "",
   };
-  return { root, toggle, field, input, count, prev, next, pop, list, note, more };
+  return { root, toggle, field, input, count, status, prev, next, pop, list, note, more };
 }
 
 export function startSearch(): void {

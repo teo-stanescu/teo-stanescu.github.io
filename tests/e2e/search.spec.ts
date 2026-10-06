@@ -356,7 +356,8 @@ test("e2e-search-scope", async ({ page }) => {
   expect(await hlSize(page, "search-active")).toBeGreaterThanOrEqual(2);
   // A one-character query finds nothing and shows no list, only the hint.
   await type(page, "a");
-  await expect(counter(page)).toHaveText("Type 2 or more characters");
+  await expect(counter(page)).toHaveText("");
+  await expect(page.locator('[role="status"]')).toHaveText("Type 2 or more characters");
   await expect(options(page)).toHaveCount(0);
   await expect(page.locator(".search-pop")).toContainText("Type 2 or more characters");
 });
@@ -710,8 +711,27 @@ test("e2e-search-hint-announced", async ({ page }) => {
   await page.waitForSelector("html.search-ready");
   await page.keyboard.press("/");
   await page.getByRole("combobox").pressSequentially("e");
-  const live = page.locator('.search-count[aria-live="polite"]');
+  const live = page.locator('[role="status"][aria-live="polite"]');
   await expect(live).toHaveText("Type 2 or more characters");
+  await expect(page.locator(".search-count")).toHaveText("");
   await page.getByRole("combobox").pressSequentially("r");
-  await expect(live).toHaveText(/^1 of \d+$/);
+  await expect(live).toHaveText("");
+  await expect(page.locator(".search-count")).toHaveText(/^1 of \d+$/);
+});
+
+test("e2e-search-hint-phone-layout", async ({ page }) => {
+  for (const w of [360, 375]) {
+    await page.setViewportSize({ width: w, height: 800 });
+    await page.goto("/");
+    await page.waitForSelector("html.search-ready");
+    await page.getByRole("button", { name: /search/i }).first().click();
+    await page.getByRole("combobox").pressSequentially("e");
+    await expect(page.locator('[role="status"]')).toHaveText("Type 2 or more characters");
+    const box = (await page.getByRole("combobox").boundingBox())!;
+    expect(box.width, `${w} input width`).toBeGreaterThanOrEqual(120);
+    const next = (await page.locator(".search-next").boundingBox())!;
+    expect(next.x + next.width, `${w} next in viewport`).toBeLessThanOrEqual(w);
+    const tree = await page.locator("body").ariaSnapshot();
+    expect(tree.split("Type 2 or more characters").length - 1, `${w} once in tree`).toBe(1);
+  }
 });

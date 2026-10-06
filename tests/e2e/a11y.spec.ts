@@ -231,3 +231,32 @@ test("e2e-search-many-results-axe", async ({ page }) => {
     }
   }
 });
+
+// In a short window every shown option and the "and N more" note stay on screen.
+test("e2e-search-list-fits-short-window", async ({ page }) => {
+  for (const [width, height] of [
+    [1280, 600],
+    [1024, 500],
+  ]) {
+    await page.setViewportSize({ width, height });
+    await page.goto("/");
+    await page.waitForSelector("html.search-ready");
+    await page.keyboard.press("/");
+    await page.getByRole("combobox").pressSequentially("er");
+    await expect(page.locator(".search-count")).toHaveText(/^1 of \d+$/);
+    await page.waitForTimeout(80);
+    const n = await page.getByRole("option").count();
+    expect(n, `${width}x${height} options`).toBeGreaterThanOrEqual(1);
+    const r = await page.evaluate(() => {
+      const bottoms = [...document.querySelectorAll(".search-opt, .search-note:not([hidden])")].map(
+        (e) => Math.round(e.getBoundingClientRect().bottom),
+      );
+      const note = document.querySelector(".search-note:not([hidden])");
+      return { bottoms, noteText: note?.textContent ?? "", h: window.innerHeight };
+    });
+    for (const b of r.bottoms) expect(b, `${width}x${height} bottom`).toBeLessThanOrEqual(r.h);
+    // Fewer options show, so the note counts the hidden ones.
+    expect(r.noteText, `${width}x${height} note`).toMatch(/\d+/);
+    expect(await axe(page), `${width}x${height} axe`).toEqual([]);
+  }
+});

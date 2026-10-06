@@ -208,6 +208,28 @@ function openList(): void {
   ui.pop.hidden = false;
   ui.list.hidden = state.hits.length === 0;
   ui.input.setAttribute("aria-expanded", String(state.hits.length > 0));
+  fitList();
+}
+
+// Show only the options that fit the window height. The "and N more" note counts the rest.
+// A short window has no scroll to reach a clipped option, because the bar is fixed.
+function fitList(): void {
+  if (!ui || ui.pop.hidden || state.hits.length === 0) return;
+  const opts = ui.list.children;
+  const room = (): boolean => ui!.pop.getBoundingClientRect().bottom <= window.innerHeight;
+  // Restore the full set first, so a taller window shows more again.
+  const total = Math.min(state.hits.length, MAX_OPTIONS);
+  const sel = state.sel;
+  if (opts.length < total) renderOptions(total);
+  while (opts.length > 1 && !room()) opts[opts.length - 1].remove();
+  setMore(state.hits.length - opts.length);
+  setSel(sel < opts.length ? sel : -1);
+}
+
+function setMore(n: number): void {
+  if (!ui) return;
+  ui.more.hidden = n <= 0;
+  ui.more.textContent = n > 0 ? labels.more.replace("{n}", String(n)) : "";
 }
 
 function snippetParts(m: Match): [string, string, string] {
@@ -232,10 +254,10 @@ function snippetParts(m: Match): [string, string, string] {
   return [before.replace(/\s+/g, " "), hit, after.replace(/\s+/g, " ")];
 }
 
-function renderList(): void {
+function renderOptions(count: number): void {
   if (!ui) return;
   ui.list.replaceChildren();
-  state.hits.slice(0, MAX_OPTIONS).forEach((h, i) => {
+  state.hits.slice(0, count).forEach((h, i) => {
     const opt = el("div", "search-opt");
     opt.id = `search-opt-${i}`;
     opt.setAttribute("role", "option");
@@ -251,6 +273,11 @@ function renderList(): void {
     opt.append(title, snip);
     ui!.list.append(opt);
   });
+}
+
+function renderList(): void {
+  if (!ui) return;
+  renderOptions(MAX_OPTIONS);
   ui.note.hidden = state.matches.length > 0;
   ui.note.textContent = state.matches.length > 0 ? "" : labels.noMatches;
   ui.more.hidden = state.more === 0;
@@ -577,6 +604,9 @@ export function startSearch(): void {
     }
   };
   document.addEventListener("keydown", onKey);
+  window.addEventListener("resize", () => {
+    if (state.listOpen) fitList();
+  });
 
   onNavToggle = (e) => {
     if ((e as ToggleEvent).newState === "open") closeList();
